@@ -1,0 +1,23 @@
+{
+  "name": "daisy-ui-5-tailwind-4-test",
+  "version": "1.0.0",
+  "description": "Test project for Daisy UI 5 + Tailwind CSS 4",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^4.3.3",
+    "vite": "^5.4.8",
+    "tailwindcss": "latest",
+    "@tailwindcss/vite": "latest",
+    "daisyui": "latest"
+  }
+}
