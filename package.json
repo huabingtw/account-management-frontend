@@ -11,13 +11,14 @@
   },
   "dependencies": {
     "react": "^18.3.1",
-    "react-dom": "^18.3.1"
+    "react-dom": "^18.3.1",
+    "react-router-dom": "^7.9.2"
   },
   "devDependencies": {
-    "@vitejs/plugin-react": "^4.3.3",
-    "vite": "^5.4.8",
-    "tailwindcss": "latest",
     "@tailwindcss/vite": "latest",
-    "daisyui": "latest"
+    "@vitejs/plugin-react": "^4.3.3",
+    "daisyui": "latest",
+    "tailwindcss": "latest",
+    "vite": "^5.4.8"
   }
 }
