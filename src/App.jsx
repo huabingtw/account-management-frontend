@@ -6,6 +6,7 @@ import MainLayout from './layouts/MainLayout'
 import Login from './pages/Login'
 import Dashboard from './pages/Dashboard'
 import Profile from './pages/Profile'
+import ChangePassword from './pages/ChangePassword'
 import SystemAccess from './pages/SystemAccess'
 import DeviceSecurity from './pages/DeviceSecurity'
 import PermissionManagement from './pages/PermissionManagement'
@@ -34,6 +35,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <MainLayout><Profile /></MainLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/change-password"
+            element={
+              <ProtectedRoute>
+                <MainLayout><ChangePassword /></MainLayout>
               </ProtectedRoute>
             }
           />

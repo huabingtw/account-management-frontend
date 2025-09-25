@@ -61,9 +61,12 @@ export function AuthProvider({ children }) {
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
-    // 模擬從 localStorage 或 API 獲取使用者資訊
+    // 檢查 localStorage 是否有登入狀態
+    const savedAuth = localStorage.getItem('auth')
     setTimeout(() => {
-      setUser(defaultUser)
+      if (savedAuth === 'true') {
+        setUser(defaultUser)
+      }
       setIsLoading(false)
     }, 100)
   }, [])
@@ -71,6 +74,7 @@ export function AuthProvider({ children }) {
   const login = async (credentials) => {
     // 模擬登入 API
     setUser(defaultUser)
+    localStorage.setItem('auth', 'true')
     return defaultUser
   }
 
@@ -80,6 +84,7 @@ export function AuthProvider({ children }) {
 
   const logout = () => {
     setUser(null)
+    localStorage.removeItem('auth')
   }
 
   const hasPermission = (permission) => {

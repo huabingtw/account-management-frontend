@@ -1,9 +1,13 @@
 import React, { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { useAuth } from '../hooks/useAuth.jsx'
 
 export default function Login() {
+  const navigate = useNavigate()
+  const { login } = useAuth()
   const [formData, setFormData] = useState({
-    email: '',
-    password: ''
+    account: 'demo',
+    password: 'demo'
   })
   const [isLoading, setIsLoading] = useState(false)
 
@@ -18,11 +22,18 @@ export default function Login() {
     e.preventDefault()
     setIsLoading(true)
 
-    // 模擬 API 呼叫
-    setTimeout(() => {
+    try {
+      // 使用 useAuth 的 login 函數
+      await login({ account: formData.account, password: formData.password })
+
+      setTimeout(() => {
+        setIsLoading(false)
+        navigate('/dashboard')
+      }, 1000)
+    } catch (error) {
+      console.error('Login failed:', error)
       setIsLoading(false)
-      console.log('Login attempt:', formData)
-    }, 1000)
+    }
   }
 
   return (
@@ -36,14 +47,14 @@ export default function Login() {
 
           <div className="form-control">
             <label className="label">
-              <span className="label-text">電子郵件</span>
+              <span className="label-text">帳號</span>
             </label>
             <input
-              type="email"
-              name="email"
-              placeholder="請輸入電子郵件"
+              type="text"
+              name="account"
+              placeholder="請輸入 Email 或手機號碼"
               className="input input-bordered"
-              value={formData.email}
+              value={formData.account}
               onChange={handleInputChange}
               required
             />

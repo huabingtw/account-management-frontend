@@ -1,6 +1,8 @@
 import React, { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 
 export default function Profile() {
+  const navigate = useNavigate()
   const [isEditing, setIsEditing] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
   const [formData, setFormData] = useState({
@@ -165,7 +167,10 @@ export default function Profile() {
             <div className="card-body">
               <h3 className="card-title text-lg">安全設定</h3>
               <div className="space-y-3">
-                <button className="btn btn-outline w-full">
+                <button
+                  className="btn btn-outline w-full"
+                  onClick={() => navigate('/change-password')}
+                >
                   🔒 變更密碼
                 </button>
                 <button className="btn btn-outline w-full">
