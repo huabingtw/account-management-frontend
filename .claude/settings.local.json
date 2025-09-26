@@ -6,7 +6,8 @@
       "Bash(npm run build:all:*)",
       "Bash(npm run build:standalone:*)",
       "Bash(rm:*)",
-      "Bash(npm uninstall:*)"
+      "Bash(npm uninstall:*)",
+      "Bash(openssl req:*)"
     ],
     "deny": [],
     "ask": []

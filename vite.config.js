@@ -1,12 +1,17 @@
 import { defineConfig } from "vite";
 import tailwindcss from "@tailwindcss/vite";
 import react from "@vitejs/plugin-react";
+import fs from 'fs';
 
 export default defineConfig({
   plugins: [tailwindcss(), react()],
   server: {
-    https: false, // 開發環境使用 HTTP
-    port: 5173,
+    https: {
+      key: fs.readFileSync('./localhost-key.pem'),
+      cert: fs.readFileSync('./localhost-cert.pem'),
+    },
+    port: 5175,
+    host: 'localhost',
   },
-  base: './', // 編譯時使用相對路徑，確保 HTTPS 環境相容性
+  base: './',
 });

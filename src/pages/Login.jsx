@@ -10,8 +10,8 @@ export default function Login() {
   // Google OAuth Client ID (需要從 Google Cloud Console 獲取)
   const GOOGLE_CLIENT_ID = "YOUR_GOOGLE_CLIENT_ID_HERE" // 這裡需要替換為實際的 Google Client ID
   const [formData, setFormData] = useState({
-    account: 'demo',
-    password: 'demo'
+    email: '',
+    password: ''
   })
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
@@ -30,7 +30,7 @@ export default function Login() {
 
     try {
       // 使用 useAuth 的 login 函數
-      await login({ account: formData.account, password: formData.password })
+      await login({ email: formData.email, password: formData.password })
 
       // 登入成功，跳轉到儀表板
       navigate('/dashboard')
@@ -82,14 +82,14 @@ export default function Login() {
 
           <div className="form-control">
             <label className="label">
-              <span className="label-text">帳號</span>
+              <span className="label-text">Email</span>
             </label>
             <input
-              type="text"
-              name="account"
-              placeholder="請輸入 Email 或手機號碼"
+              type="email"
+              name="email"
+              placeholder="請輸入 Email"
               className="input input-bordered"
-              value={formData.account}
+              value={formData.email}
               onChange={handleInputChange}
               required
             />

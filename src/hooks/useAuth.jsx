@@ -115,7 +115,7 @@ export function AuthProvider({ children }) {
 
   const login = async (credentials) => {
     // 檢查是否是 demo 帳號
-    if (credentials.account === 'demo' && credentials.password === 'demo') {
+    if (credentials.email === 'demo@example.com' && credentials.password === 'demo') {
       // 使用原本的 demo 模式
       setUser(defaultUser)
       localStorage.setItem('auth', 'true')
@@ -124,7 +124,7 @@ export function AuthProvider({ children }) {
 
     try {
       // 嘗試使用 API 登入
-      const response = await loginAPI(credentials.account, credentials.password)
+      const response = await loginAPI(credentials.email, credentials.password)
       console.log('API Login Response:', response)
 
       if (response.success) {

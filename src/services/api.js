@@ -49,7 +49,8 @@ export const loginAPI = async (email, password) => {
     body: JSON.stringify({
       email,
       password,
-      system_slug: 'account',
+      system_code: 'account',
+      client_code: 'account-frontend',
     }),
   })
 }
