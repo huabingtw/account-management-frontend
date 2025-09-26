@@ -1,17 +1,48 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { getUserProfileAPI } from '../services/api'
 
 export default function Profile() {
   const navigate = useNavigate()
   const [isEditing, setIsEditing] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState(null)
   const [formData, setFormData] = useState({
-    name: '張三',
-    email: 'zhang.san@example.com',
-    phone: '+886 912 345 678',
-    department: '資訊部',
-    position: '系統工程師'
+    name: '',
+    display_name: '',
+    email: '',
+    mobile: '',
+    department: '',
+    position: ''
   })
+
+  // 載入用戶資料
+  useEffect(() => {
+    const loadUserProfile = async () => {
+      try {
+        setIsLoading(true)
+        setError(null)
+        const response = await getUserProfileAPI()
+
+        setFormData({
+          name: response.data?.name || '',
+          display_name: response.data?.display_name || '',
+          email: response.data?.email || '',
+          mobile: response.data?.mobile || '',
+          department: response.data?.department || '',
+          position: response.data?.position || ''
+        })
+      } catch (err) {
+        console.error('載入用戶資料失敗:', err)
+        setError('載入用戶資料失敗，請重新整理頁面')
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    loadUserProfile()
+  }, [])
 
   const handleInputChange = (e) => {
     setFormData({
@@ -22,12 +53,52 @@ export default function Profile() {
 
   const handleSave = async () => {
     setIsSaving(true)
-    // 模擬 API 呼叫
-    setTimeout(() => {
-      setIsSaving(false)
-      setIsEditing(false)
+    try {
+      // TODO: 實作更新用戶資料 API
       console.log('Profile updated:', formData)
-    }, 1000)
+      setIsEditing(false)
+    } catch (err) {
+      console.error('更新用戶資料失敗:', err)
+      setError('更新失敗，請稍後再試')
+    } finally {
+      setIsSaving(false)
+    }
+  }
+
+  // 載入中狀態
+  if (isLoading) {
+    return (
+      <div className="p-6">
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-base-content">個人資料</h1>
+          <p className="text-base-content/70 mt-2">管理您的個人資訊</p>
+        </div>
+        <div className="flex justify-center items-center h-64">
+          <span className="loading loading-spinner loading-lg"></span>
+        </div>
+      </div>
+    )
+  }
+
+  // 錯誤狀態
+  if (error) {
+    return (
+      <div className="p-6">
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-base-content">個人資料</h1>
+          <p className="text-base-content/70 mt-2">管理您的個人資訊</p>
+        </div>
+        <div className="alert alert-error">
+          <span>{error}</span>
+          <button
+            className="btn btn-sm btn-outline"
+            onClick={() => window.location.reload()}
+          >
+            重新載入
+          </button>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -91,6 +162,44 @@ export default function Profile() {
 
                 <div className="form-control">
                   <label className="label">
+                    <span className="label-text">公開名稱</span>
+                    <span className="label-text-alt text-base-content/50">其他用戶看到的名稱</span>
+                  </label>
+                  {isEditing ? (
+                    <input
+                      type="text"
+                      name="display_name"
+                      className="input input-bordered"
+                      value={formData.display_name}
+                      onChange={handleInputChange}
+                      placeholder="輸入公開顯示的名稱"
+                    />
+                  ) : (
+                    <div className="p-3 bg-base-200 rounded-lg">
+                      {formData.display_name || '未設定'}
+                    </div>
+                  )}
+                </div>
+
+                <div className="form-control">
+                  <label className="label">
+                    <span className="label-text">手機號碼</span>
+                  </label>
+                  {isEditing ? (
+                    <input
+                      type="tel"
+                      name="mobile"
+                      className="input input-bordered"
+                      value={formData.mobile}
+                      onChange={handleInputChange}
+                    />
+                  ) : (
+                    <div className="p-3 bg-base-200 rounded-lg">{formData.mobile}</div>
+                  )}
+                </div>
+
+                <div className="form-control md:col-span-2">
+                  <label className="label">
                     <span className="label-text">電子郵件</span>
                   </label>
                   {isEditing ? (
@@ -103,23 +212,6 @@ export default function Profile() {
                     />
                   ) : (
                     <div className="p-3 bg-base-200 rounded-lg">{formData.email}</div>
-                  )}
-                </div>
-
-                <div className="form-control">
-                  <label className="label">
-                    <span className="label-text">手機號碼</span>
-                  </label>
-                  {isEditing ? (
-                    <input
-                      type="tel"
-                      name="phone"
-                      className="input input-bordered"
-                      value={formData.phone}
-                      onChange={handleInputChange}
-                    />
-                  ) : (
-                    <div className="p-3 bg-base-200 rounded-lg">{formData.phone}</div>
                   )}
                 </div>
 

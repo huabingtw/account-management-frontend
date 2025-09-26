@@ -6,7 +6,12 @@
   "main": "index.js",
   "scripts": {
     "dev": "vite",
+    "dev:local": "vite --mode localdev",
+    "dev:development": "vite --mode development",
+    "dev:production": "vite --mode production",
     "build": "vite build",
+    "build:development": "vite build --mode development",
+    "build:production": "vite build --mode production",
     "preview": "vite preview"
   },
   "dependencies": {

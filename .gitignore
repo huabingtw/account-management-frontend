@@ -17,6 +17,12 @@ out/
 .env.test.local
 .env.production.local
 
+# SSL certificates for development
+*.pem
+*.key
+*.crt
+*.cert
+
 # IDE and editor files
 .vscode/
 .idea/
