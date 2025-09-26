@@ -3,6 +3,7 @@ import { useAuth } from '../hooks/useAuth.jsx'
 
 export default function Dashboard() {
   const { user, switchUser, mockUsers } = useAuth()
+  console.log('Dashboard - current user:', user)
   const stats = [
     { title: '已授權系統', value: '5', desc: '本月', icon: '🏢' },
     { title: '信任裝置', value: '3', desc: '活躍裝置', icon: '📱' },
