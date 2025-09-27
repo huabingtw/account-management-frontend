@@ -1,13 +1,16 @@
 import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { getUserProfileAPI } from '../services/api'
+import { useAuth } from '../hooks/useAuth'
 
 export default function Profile() {
   const navigate = useNavigate()
+  const { logout, user, token, isAuthenticated, isLoading: authLoading } = useAuth()
   const [isEditing, setIsEditing] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState(null)
+  const [debugInfo, setDebugInfo] = useState(null)
   const [formData, setFormData] = useState({
     name: '',
     display_name: '',
@@ -17,12 +20,39 @@ export default function Profile() {
     position: ''
   })
 
+  // 收集調試資訊
+  useEffect(() => {
+    const collectDebugInfo = () => {
+      const debug = {
+        useAuth: {
+          user: user,
+          token: token,
+          isAuthenticated: isAuthenticated,
+          authLoading: authLoading
+        },
+        localStorage: {
+          auth_token: localStorage.getItem('auth_token'),
+          user_data: localStorage.getItem('user_data'),
+          auth: localStorage.getItem('auth'),
+          last_auth_check: localStorage.getItem('last_auth_check')
+        },
+        timestamp: new Date().toISOString()
+      }
+      setDebugInfo(debug)
+      console.log('🔍 調試資訊:', debug)
+    }
+
+    collectDebugInfo()
+  }, [user, token, isAuthenticated, authLoading])
+
   // 載入用戶資料
   useEffect(() => {
     const loadUserProfile = async () => {
       try {
         setIsLoading(true)
         setError(null)
+
+        console.log('🚀 開始載入用戶資料...')
         const response = await getUserProfileAPI()
 
         setFormData({
@@ -34,8 +64,37 @@ export default function Profile() {
           position: response.data?.position || ''
         })
       } catch (err) {
-        console.error('載入用戶資料失敗:', err)
-        setError('載入用戶資料失敗，請重新整理頁面')
+        console.error('❌ 載入用戶資料失敗:', err)
+        console.log('❌ 錯誤詳細資訊:', {
+          message: err.message,
+          status: err.status,
+          statusText: err.statusText,
+          errorType: err.errorType,
+          fullMessage: err.fullMessage,
+          originalError: err.originalError
+        })
+
+        // 檢查是否為認證錯誤（401, 403）
+        if (err.status === 401 || err.status === 403) {
+          console.log('🔒 認證錯誤，準備登出...')
+          // 認證失敗，清除本地資料（路由守衛會自動處理重導向）
+          await logout()
+          return
+        }
+
+        // 檢查是否為網路連線失敗且有 token（可能是 token 過期）
+        if (err.status === 0 && localStorage.getItem('auth_token')) {
+          console.log('🔄 網路連線失敗但有 token，可能是認證過期，嘗試清除認證...')
+          setError('認證可能已過期，請重新登入')
+          setTimeout(async () => {
+            await logout()
+          }, 2000) // 2秒後自動跳轉
+          return
+        }
+
+        // 其他錯誤（網路問題、伺服器錯誤、資料問題），顯示錯誤訊息
+        console.log('⚠️  其他錯誤，顯示錯誤訊息')
+        setError(`載入用戶資料失敗：${err.message} (狀態碼: ${err.status || '無'})`)
       } finally {
         setIsLoading(false)
       }
@@ -107,6 +166,63 @@ export default function Profile() {
         <h1 className="text-3xl font-bold text-base-content">個人資料</h1>
         <p className="text-base-content/70 mt-2">管理您的個人資訊</p>
       </div>
+
+      {/* 調試資訊 */}
+      {debugInfo && (
+        <div className="mb-6">
+          <div className="collapse collapse-arrow bg-base-200">
+            <input type="checkbox" />
+            <div className="collapse-title text-xl font-medium">
+              🔍 調試資訊 (F5 重新整理檢查)
+            </div>
+            <div className="collapse-content">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <h4 className="font-bold mb-2">useAuth 狀態:</h4>
+                  <div className="bg-base-300 p-3 rounded text-sm">
+                    <div>isAuthenticated: <span className={debugInfo.useAuth.isAuthenticated ? 'text-success' : 'text-error'}>{debugInfo.useAuth.isAuthenticated ? '✅ true' : '❌ false'}</span></div>
+                    <div>authLoading: <span className={debugInfo.useAuth.authLoading ? 'text-warning' : 'text-success'}>{debugInfo.useAuth.authLoading ? '⏳ true' : '✅ false'}</span></div>
+                    <div>user: {debugInfo.useAuth.user ? '✅ 存在' : '❌ null'}</div>
+                    <div>token: {debugInfo.useAuth.token ? '✅ 存在' : '❌ null'}</div>
+                  </div>
+                </div>
+                <div>
+                  <h4 className="font-bold mb-2">localStorage:</h4>
+                  <div className="bg-base-300 p-3 rounded text-sm">
+                    <div>auth_token: {debugInfo.localStorage.auth_token ? '✅ 存在' : '❌ 無'}</div>
+                    <div>user_data: {debugInfo.localStorage.user_data ? '✅ 存在' : '❌ 無'}</div>
+                    <div>auth: {debugInfo.localStorage.auth || '❌ 無'}</div>
+                    <div>last_auth_check: {debugInfo.localStorage.last_auth_check ? new Date(parseInt(debugInfo.localStorage.last_auth_check)).toLocaleString() : '❌ 無'}</div>
+                  </div>
+                </div>
+              </div>
+              <div className="mt-4">
+                <div className="text-xs text-base-content/50">檢查時間: {debugInfo.timestamp}</div>
+                <div className="mt-3 flex gap-2">
+                  <button
+                    className="btn btn-sm btn-error"
+                    onClick={async () => {
+                      console.log('🧪 手動清除認證資料進行測試...')
+                      await logout()
+                    }}
+                  >
+                    🧪 清除認證測試跳轉
+                  </button>
+                  <button
+                    className="btn btn-sm btn-warning"
+                    onClick={() => {
+                      localStorage.clear()
+                      window.location.reload()
+                    }}
+                  >
+                    🗑️ 清空 localStorage
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* 個人資料卡片 */}

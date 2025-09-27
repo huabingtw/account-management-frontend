@@ -62,7 +62,8 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* 快速操作 */}
+        {/* 快速操作 - 暫時隱藏 */}
+        {/*
         <div className="card bg-base-100 shadow-xl">
           <div className="card-body">
             <h2 className="card-title">快速操作</h2>
@@ -86,6 +87,7 @@ export default function Dashboard() {
             </div>
           </div>
         </div>
+        */}
 
         {/* 測試用戶角色切換 */}
         <div className="card bg-base-100 shadow-xl">

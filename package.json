@@ -5,11 +5,12 @@
   "type": "module",
   "main": "index.js",
   "scripts": {
-    "dev": "vite",
+    "dev": "vite --mode localdev",
     "dev:local": "vite --mode localdev",
     "dev:development": "vite --mode development",
     "dev:production": "vite --mode production",
-    "build": "vite build",
+    "build": "vite build --mode production",
+    "build:local": "vite build --mode localdev",
     "build:development": "vite build --mode development",
     "build:production": "vite build --mode production",
     "preview": "vite preview"

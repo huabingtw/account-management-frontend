@@ -7,7 +7,12 @@
       "Bash(npm run build:standalone:*)",
       "Bash(rm:*)",
       "Bash(npm uninstall:*)",
-      "Bash(openssl req:*)"
+      "Bash(openssl req:*)",
+      "Bash(netstat:*)",
+      "Bash(findstr:*)",
+      "Bash(npm run dev:local:*)",
+      "Bash(timeout:*)",
+      "Bash(tasklist:*)"
     ],
     "deny": [],
     "ask": []

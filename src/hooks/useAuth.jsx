@@ -61,17 +61,41 @@ export function AuthProvider({ children }) {
   const [user, setUser] = useState(null)
   const [isLoading, setIsLoading] = useState(true)
   const [token, setToken] = useState(null)
+  const [lastAuthCheck, setLastAuthCheck] = useState(null)
 
   useEffect(() => {
     // 檢查 localStorage 是否有登入 token
     const savedToken = localStorage.getItem('auth_token')
     const savedAuth = localStorage.getItem('auth')
+    const savedUserData = localStorage.getItem('user_data')
 
-    setTimeout(() => {
+    const initAuth = async () => {
       if (savedToken) {
         setToken(savedToken)
-        // 嘗試從 API 獲取用戶資訊
-        checkAuth(savedToken)
+
+        // 如果有保存的用戶資料，先設定它來避免載入延遲
+        if (savedUserData) {
+          try {
+            const userData = JSON.parse(savedUserData)
+            setUser(userData)
+          } catch (error) {
+            console.error('解析保存的用戶資料失敗:', error)
+          }
+        }
+
+        // 檢查是否需要驗證（避免頻繁請求）
+        const lastCheck = localStorage.getItem('last_auth_check')
+        const now = Date.now()
+        const fiveMinutes = 5 * 60 * 1000 // 5分鐘
+
+        if (!lastCheck || (now - parseInt(lastCheck)) > fiveMinutes) {
+          // 超過5分鐘沒檢查，或第一次載入，才進行 API 驗證
+          await checkAuth(savedToken)
+          localStorage.setItem('last_auth_check', now.toString())
+        } else {
+          // 5分鐘內已檢查過，直接使用緩存資料
+          setIsLoading(false)
+        }
       } else if (savedAuth === 'true') {
         // 備用方案：使用舊的 demo 模式
         setUser(defaultUser)
@@ -79,7 +103,9 @@ export function AuthProvider({ children }) {
       } else {
         setIsLoading(false)
       }
-    }, 100)
+    }
+
+    initAuth()
   }, [])
 
   const checkAuth = async (token) => {
@@ -101,13 +127,40 @@ export function AuthProvider({ children }) {
         }
 
         setUser(userWithRoles)
+        // 更新保存的用戶資料
+        localStorage.setItem('user_data', JSON.stringify(userWithRoles))
       } else {
         // Token 無效，清除本地存儲
+        console.warn('Token 無效，清除認證資料')
         clearAuth()
       }
     } catch (error) {
       console.error('檢查認證失敗:', error)
-      clearAuth()
+
+      // 如果是認證相關錯誤（401, 403），直接清除認證狀態
+      if (error.status === 401 || error.status === 403) {
+        console.warn('認證失效，清除本地資料')
+        clearAuth()
+        return
+      }
+
+      // 如果有保存的用戶資料，暫時保持登入狀態
+      const savedUserData = localStorage.getItem('user_data')
+      if (savedUserData && !user) {
+        try {
+          const userData = JSON.parse(savedUserData)
+          setUser(userData)
+          console.warn('API 失敗，使用緩存的用戶資料')
+        } catch (parseError) {
+          console.error('解析用戶資料失敗:', parseError)
+          clearAuth()
+        }
+      }
+
+      // 如果沒有緩存資料或用戶已設定，則清除認證
+      if (!savedUserData && !user) {
+        clearAuth()
+      }
     } finally {
       setIsLoading(false)
     }
@@ -149,6 +202,7 @@ export function AuthProvider({ children }) {
         setToken(token)
         localStorage.setItem('auth_token', token)
         localStorage.setItem('user_data', JSON.stringify(userWithRoles))
+        localStorage.setItem('last_auth_check', Date.now().toString())
         // 清除舊的 demo 模式標記
         localStorage.removeItem('auth')
 
@@ -191,6 +245,7 @@ export function AuthProvider({ children }) {
         setToken(token)
         localStorage.setItem('auth_token', token)
         localStorage.setItem('user_data', JSON.stringify(userWithRoles))
+        localStorage.setItem('last_auth_check', Date.now().toString())
         // 清除舊的 demo 模式標記
         localStorage.removeItem('auth')
 
@@ -210,6 +265,7 @@ export function AuthProvider({ children }) {
     localStorage.removeItem('auth_token')
     localStorage.removeItem('user_data')
     localStorage.removeItem('auth')
+    localStorage.removeItem('last_auth_check')
   }
 
   const switchUser = (userType) => {
@@ -265,7 +321,7 @@ export function AuthProvider({ children }) {
     user,
     token,
     isLoading,
-    isAuthenticated: !!user && (!!token || localStorage.getItem('auth') === 'true'),
+    isAuthenticated: !!user,
     login,
     googleLogin,
     logout,
