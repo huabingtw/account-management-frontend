@@ -12,11 +12,13 @@ import ChangePassword from './pages/ChangePassword'
 import SystemAccess from './pages/SystemAccess'
 import DeviceSecurity from './pages/DeviceSecurity'
 import PermissionManagement from './pages/PermissionManagement'
-import RoleManagement from './pages/RoleManagement'
 import UserRoleManagement from './pages/UserRoleManagement'
 import AdminUsers from './pages/AdminUsers'
 import AdminUserEdit from './pages/AdminUserEdit'
 import AdminPermissions from './pages/AdminPermissions'
+import AdminPermissionEdit from './pages/AdminPermissionEdit'
+import AdminRoles from './pages/AdminRoles'
+import AdminRoleEdit from './pages/AdminRoleEdit'
 import AdminSystems from './pages/AdminSystems'
 import AdminOAuthClients from './pages/AdminOAuthClients'
 
@@ -99,7 +101,7 @@ function App() {
             }
           />
           <Route
-            path="/admin/users/:uuid/edit"
+            path="/admin/users/:id/edit"
             element={
               <AuthenticatedGuard anyRole={['super_admin', 'admin', 'inspector']}>
                 <MainLayout><AdminUserEdit /></MainLayout>
@@ -111,6 +113,30 @@ function App() {
             element={
               <AuthenticatedGuard anyRole={['super_admin', 'admin', 'inspector']}>
                 <MainLayout><AdminPermissions /></MainLayout>
+              </AuthenticatedGuard>
+            }
+          />
+          <Route
+            path="/admin/permissions/:id"
+            element={
+              <AuthenticatedGuard anyRole={['super_admin', 'admin']}>
+                <MainLayout><AdminPermissionEdit /></MainLayout>
+              </AuthenticatedGuard>
+            }
+          />
+          <Route
+            path="/admin/roles"
+            element={
+              <AuthenticatedGuard anyRole={['super_admin', 'admin', 'inspector']}>
+                <MainLayout><AdminRoles /></MainLayout>
+              </AuthenticatedGuard>
+            }
+          />
+          <Route
+            path="/admin/roles/:id"
+            element={
+              <AuthenticatedGuard anyRole={['super_admin', 'admin']}>
+                <MainLayout><AdminRoleEdit /></MainLayout>
               </AuthenticatedGuard>
             }
           />
@@ -129,14 +155,6 @@ function App() {
             element={
               <AuthenticatedGuard anyRole={['super_admin']}>
                 <MainLayout><PermissionManagement /></MainLayout>
-              </AuthenticatedGuard>
-            }
-          />
-          <Route
-            path="/roles"
-            element={
-              <AuthenticatedGuard anyRole={['super_admin']}>
-                <MainLayout><RoleManagement /></MainLayout>
               </AuthenticatedGuard>
             }
           />

@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react'
 import { useNavigate, useSearchParams, Link } from 'react-router-dom'
-import { getAdminPermissionsAPI, deleteAdminPermissionAPI } from '../services/api'
+import { getAdminRolesAPI, deleteAdminRoleAPI } from '../services/api'
 import { useAuth } from '../hooks/useAuth'
 
-export default function AdminPermissions() {
+export default function AdminRoles() {
   const navigate = useNavigate()
   const { user } = useAuth()
   const [searchParams, setSearchParams] = useSearchParams()
-  const [permissions, setPermissions] = useState([])
+  const [roles, setRoles] = useState([])
   const [pagination, setPagination] = useState({})
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
@@ -18,7 +18,7 @@ export default function AdminPermissions() {
   const [filters, setFilters] = useState({
     filter_name: searchParams.get('filter_name') || '',
     filter_display_name: searchParams.get('filter_display_name') || '',
-    filter_group: searchParams.get('filter_group') || ''
+    filter_description: searchParams.get('filter_description') || ''
   })
 
   // 響應式 filter 面板顯示狀態
@@ -42,7 +42,7 @@ export default function AdminPermissions() {
     return params.toString()
   }
 
-  const loadPermissions = async (page = 1, filterParams = filters, pageSize = perPage) => {
+  const loadRoles = async (page = 1, filterParams = filters, pageSize = perPage) => {
     try {
       setLoading(true)
       setError(null)
@@ -57,13 +57,13 @@ export default function AdminPermissions() {
         }
       })
 
-      const response = await getAdminPermissionsAPI(page, pageSize, '', filterUrl)
+      const response = await getAdminRolesAPI(page, pageSize, '', filterUrl)
 
       if (response.success) {
         // 處理分頁數據，檢查是否為 OrmHelper 格式
         if (response.data.data) {
           // 標準 Laravel 分頁格式
-          setPermissions(response.data.data)
+          setRoles(response.data.data)
           setPagination({
             current_page: response.data.current_page,
             last_page: response.data.last_page,
@@ -74,24 +74,24 @@ export default function AdminPermissions() {
           })
         } else if (Array.isArray(response.data)) {
           // OrmHelper 可能直接返回陣列
-          setPermissions(response.data)
+          setRoles(response.data)
           setPagination({})
         } else {
           // 其他格式
-          setPermissions(response.data)
+          setRoles(response.data)
           setPagination({})
         }
       }
     } catch (err) {
-      setError(err.message || '載入權限列表失敗')
-      console.error('Load permissions error:', err)
+      setError(err.message || '載入角色列表失敗')
+      console.error('Load roles error:', err)
     } finally {
       setLoading(false)
     }
   }
 
   useEffect(() => {
-    loadPermissions()
+    loadRoles()
   }, [])
 
   const handleFilterChange = (key, value) => {
@@ -103,7 +103,7 @@ export default function AdminPermissions() {
 
   const handleFilterSubmit = () => {
     setCurrentPage(1)
-    loadPermissions(1, filters)
+    loadRoles(1, filters)
     // 更新 URL 參數
     const params = new URLSearchParams()
     params.set('page', '1')
@@ -120,11 +120,11 @@ export default function AdminPermissions() {
     const resetFilters = {
       filter_name: '',
       filter_display_name: '',
-      filter_group: ''
+      filter_description: ''
     }
     setFilters(resetFilters)
     setCurrentPage(1)
-    loadPermissions(1, resetFilters)
+    loadRoles(1, resetFilters)
     // 清除 URL 參數，只保留基本分頁
     const params = new URLSearchParams()
     params.set('page', '1')
@@ -134,7 +134,7 @@ export default function AdminPermissions() {
 
   const handlePageChange = (page) => {
     setCurrentPage(page)
-    loadPermissions(page, filters)
+    loadRoles(page, filters)
     // 更新 URL 中的頁碼
     const params = new URLSearchParams()
     params.set('page', page.toString())
@@ -150,7 +150,7 @@ export default function AdminPermissions() {
   const handlePerPageChange = (newPerPage) => {
     setPerPage(newPerPage)
     setCurrentPage(1) // 重置到第一頁
-    loadPermissions(1, filters, newPerPage)
+    loadRoles(1, filters, newPerPage)
     // 更新 URL 中的每頁筆數
     const params = new URLSearchParams()
     params.set('page', '1')
@@ -163,20 +163,20 @@ export default function AdminPermissions() {
     setSearchParams(params)
   }
 
-  const handleDelete = async (permissionId, permissionName) => {
-    if (!window.confirm(`確定要刪除權限「${permissionName}」嗎？此動作無法復原。`)) {
+  const handleDelete = async (roleId, roleName) => {
+    if (!window.confirm(`確定要刪除角色「${roleName}」嗎？此動作無法復原。`)) {
       return
     }
 
     try {
-      const response = await deleteAdminPermissionAPI(permissionId)
+      const response = await deleteAdminRoleAPI(roleId)
       if (response.success) {
-        // 重新載入權限列表
-        loadPermissions(currentPage, filters)
+        // 重新載入角色列表
+        loadRoles(currentPage, filters)
       }
     } catch (err) {
-      setError(err.message || '刪除權限失敗')
-      console.error('Delete permission error:', err)
+      setError(err.message || '刪除角色失敗')
+      console.error('Delete role error:', err)
     }
   }
 
@@ -229,7 +229,7 @@ export default function AdminPermissions() {
     )
   }
 
-  if (loading && !permissions.length) {
+  if (loading && !roles.length) {
     return (
       <div className="p-6">
         <div className="flex justify-center items-center min-h-96">
@@ -245,8 +245,8 @@ export default function AdminPermissions() {
       <div className="mb-6">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
           <div>
-            <h1 className="text-3xl font-bold text-base-content">權限管理</h1>
-            <p className="text-base-content/70">管理系統權限和存取控制</p>
+            <h1 className="text-3xl font-bold text-base-content">角色管理</h1>
+            <p className="text-base-content/70">管理系統角色和權限配置</p>
           </div>
 
           <div className="flex flex-col sm:flex-row gap-2">
@@ -278,12 +278,12 @@ export default function AdminPermissions() {
             {canEdit && (
               <button
                 className="btn btn-primary btn-sm"
-                onClick={() => navigate('/admin/permissions/create')}
+                onClick={() => navigate('/admin/roles/create')}
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                 </svg>
-                新增權限
+                新增角色
               </button>
             )}
           </div>
@@ -294,7 +294,7 @@ export default function AdminPermissions() {
           <ul>
             <li><a href="/dashboard">首頁</a></li>
             <li>進階管理</li>
-            <li>權限管理</li>
+            <li>角色管理</li>
           </ul>
         </div>
       </div>
@@ -336,14 +336,14 @@ export default function AdminPermissions() {
             </div>
             <div className="card-body">
               <form className="space-y-4">
-                {/* 權限代碼搜尋 */}
+                {/* 角色代碼搜尋 */}
                 <div className="form-control">
                   <label className="label">
-                    <span className="label-text">權限代碼</span>
+                    <span className="label-text">角色代碼</span>
                   </label>
                   <input
                     type="text"
-                    placeholder="輸入權限代碼"
+                    placeholder="輸入角色代碼"
                     className="input input-bordered input-sm w-full"
                     value={filters.filter_name}
                     onChange={(e) => handleFilterChange('filter_name', e.target.value)}
@@ -364,17 +364,17 @@ export default function AdminPermissions() {
                   />
                 </div>
 
-                {/* 分類搜尋 */}
+                {/* 描述搜尋 */}
                 <div className="form-control">
                   <label className="label">
-                    <span className="label-text">分類</span>
+                    <span className="label-text">描述</span>
                   </label>
                   <input
                     type="text"
-                    placeholder="輸入分類"
+                    placeholder="輸入描述"
                     className="input input-bordered input-sm w-full"
-                    value={filters.filter_group}
-                    onChange={(e) => handleFilterChange('filter_group', e.target.value)}
+                    value={filters.filter_description}
+                    onChange={(e) => handleFilterChange('filter_description', e.target.value)}
                   />
                 </div>
 
@@ -417,45 +417,39 @@ export default function AdminPermissions() {
                 </div>
               )}
 
-              {/* 權限列表 */}
+              {/* 角色列表 */}
               {loading ? (
                 <div className="flex justify-center py-8">
                   <span className="loading loading-spinner loading-lg"></span>
                 </div>
-              ) : permissions.length === 0 ? (
+              ) : roles.length === 0 ? (
                 <div className="text-center py-8">
-                  <p className="text-base-content/70">沒有找到符合條件的權限</p>
+                  <p className="text-base-content/70">沒有找到符合條件的角色</p>
                 </div>
               ) : (
                 <div className="overflow-x-auto">
                   <table className="table table-zebra">
                     <thead>
                       <tr>
-                        <th>權限代碼</th>
+                        <th>角色代碼</th>
                         <th>顯示名稱</th>
-                        <th>分類</th>
                         <th>描述</th>
                         {canEdit && <th className="text-center">操作</th>}
                       </tr>
                     </thead>
                     <tbody>
-                      {permissions.map((permission) => (
-                        <tr key={permission.id}>
-                          <td className="font-mono text-sm">{permission.name}</td>
-                          <td className="font-medium">{permission.display_name}</td>
-                          <td>
-                            <span className="badge badge-outline badge-sm">
-                              {permission.group}
-                            </span>
-                          </td>
+                      {roles.map((role) => (
+                        <tr key={role.id}>
+                          <td className="font-mono text-sm">{role.name}</td>
+                          <td className="font-medium">{role.display_name}</td>
                           <td className="text-sm text-base-content/70">
-                            {permission.description || '-'}
+                            {role.description || '-'}
                           </td>
                           {canEdit && (
                             <td className="text-center">
                               <div className="flex justify-center gap-2">
                                 <Link
-                                  to={`/admin/permissions/${permission.id}?${getCurrentQueryString()}`}
+                                  to={`/admin/roles/${role.id}?${getCurrentQueryString()}`}
                                   className="btn btn-ghost btn-xs"
                                   title="編輯"
                                 >
@@ -465,7 +459,7 @@ export default function AdminPermissions() {
                                 </Link>
                                 <button
                                   className="btn btn-ghost btn-xs text-error"
-                                  onClick={() => handleDelete(permission.id, permission.display_name)}
+                                  onClick={() => handleDelete(role.id, role.display_name)}
                                   title="刪除"
                                 >
                                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

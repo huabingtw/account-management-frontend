@@ -59,7 +59,7 @@ export default function MainLayout({ children }) {
           requireRole: ['super_admin', 'admin', 'inspector']
         },
         {
-          path: '/roles',
+          path: '/admin/roles',
           label: '角色管理',
           icon: '👑',
           requireRole: ['super_admin']

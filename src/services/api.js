@@ -319,28 +319,28 @@ export const getAdminUsersAPI = async (page = 1, perPage = 15, search = '', filt
 }
 
 // 取得指定使用者詳細資料
-export const getAdminUserAPI = async (uuid) => {
-  return apiRequest(`/admin/users/${uuid}`)
+export const getAdminUserAPI = async (id) => {
+  return apiRequest(`/admin/users/${id}`)
 }
 
 // 更新指定使用者資料
-export const updateAdminUserAPI = async (uuid, userData) => {
-  return apiRequest(`/admin/users/${uuid}`, {
+export const updateAdminUserAPI = async (id, userData) => {
+  return apiRequest(`/admin/users/${id}`, {
     method: 'PUT',
     body: JSON.stringify(userData),
   })
 }
 
 // 刪除指定使用者
-export const deleteAdminUserAPI = async (uuid) => {
-  return apiRequest(`/admin/users/${uuid}`, {
+export const deleteAdminUserAPI = async (id) => {
+  return apiRequest(`/admin/users/${id}`, {
     method: 'DELETE',
   })
 }
 
 // 重設指定使用者密碼
-export const resetAdminUserPasswordAPI = async (uuid, newPassword, confirmPassword) => {
-  return apiRequest(`/admin/users/${uuid}/reset-password`, {
+export const resetAdminUserPasswordAPI = async (id, newPassword, confirmPassword) => {
+  return apiRequest(`/admin/users/${id}/reset-password`, {
     method: 'POST',
     body: JSON.stringify({
       new_password: newPassword,
@@ -350,8 +350,8 @@ export const resetAdminUserPasswordAPI = async (uuid, newPassword, confirmPasswo
 }
 
 // 分配角色給使用者 (單一角色)
-export const assignRoleToUserAPI = async (uuid, roleId) => {
-  return apiRequest(`/admin/users/${uuid}/assign-role`, {
+export const assignRoleToUserAPI = async (id, roleId) => {
+  return apiRequest(`/admin/users/${id}/assign-role`, {
     method: 'POST',
     body: JSON.stringify({
       role_id: roleId,
@@ -360,8 +360,8 @@ export const assignRoleToUserAPI = async (uuid, roleId) => {
 }
 
 // 管理使用者系統權限
-export const manageUserSystemsAPI = async (uuid, systemIds) => {
-  return apiRequest(`/admin/users/${uuid}/manage-systems`, {
+export const manageUserSystemsAPI = async (id, systemIds) => {
+  return apiRequest(`/admin/users/${id}/manage-systems`, {
     method: 'POST',
     body: JSON.stringify({
       systems: systemIds,
@@ -370,8 +370,8 @@ export const manageUserSystemsAPI = async (uuid, systemIds) => {
 }
 
 // 管理使用者 2FA 設定
-export const manageUser2FAAPI = async (uuid, enabled, resetTrustedDevices = false) => {
-  return apiRequest(`/admin/users/${uuid}/manage-2fa`, {
+export const manageUser2FAAPI = async (id, enabled, resetTrustedDevices = false) => {
+  return apiRequest(`/admin/users/${id}/manage-2fa`, {
     method: 'POST',
     body: JSON.stringify({
       two_factor_enabled: enabled,
@@ -380,14 +380,67 @@ export const manageUser2FAAPI = async (uuid, enabled, resetTrustedDevices = fals
   })
 }
 
-// 取得角色列表
-export const getAdminRolesAPI = async () => {
-  return apiRequest('/admin/roles')
-}
-
 // 取得系統列表
 export const getAdminSystemsAPI = async () => {
   return apiRequest('/admin/systems')
+}
+
+// ============ 角色管理 API ============
+
+// 取得角色列表 (分頁)
+export const getAdminRolesAPI = async (page = 1, perPage = 10, search = '', filterParams = '') => {
+  // 參考 OpenCart 的做法，建構基本查詢字串
+  let url = `page=${page}&limit=${perPage}`
+
+  // 舊式搜尋參數（向下相容）
+  if (search) {
+    url += '&search=' + encodeURIComponent(search)
+  }
+
+  // 添加 filter 參數（以 & 開頭的字串）
+  if (filterParams) {
+    url += filterParams
+  }
+
+  return apiRequest(`/admin/roles?${url}`)
+}
+
+// 取得指定角色詳細資料
+export const getAdminRoleAPI = async (id) => {
+  return apiRequest(`/admin/roles/${id}`)
+}
+
+// 建立新角色
+export const createAdminRoleAPI = async (roleData) => {
+  return apiRequest('/admin/roles', {
+    method: 'POST',
+    body: JSON.stringify(roleData),
+  })
+}
+
+// 更新指定角色資料
+export const updateAdminRoleAPI = async (id, roleData) => {
+  return apiRequest(`/admin/roles/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify(roleData),
+  })
+}
+
+// 刪除指定角色
+export const deleteAdminRoleAPI = async (id) => {
+  return apiRequest(`/admin/roles/${id}`, {
+    method: 'DELETE',
+  })
+}
+
+// 為角色分配權限
+export const assignPermissionsToRoleAPI = async (roleId, permissionIds) => {
+  return apiRequest(`/admin/roles/${roleId}/permissions`, {
+    method: 'POST',
+    body: JSON.stringify({
+      permissions: permissionIds,
+    }),
+  })
 }
 
 // ============ 權限管理 API ============
@@ -469,8 +522,14 @@ export default {
   assignRoleToUser: assignRoleToUserAPI,
   manageUserSystems: manageUserSystemsAPI,
   manageUser2FA: manageUser2FAAPI,
-  getAdminRoles: getAdminRolesAPI,
   getAdminSystems: getAdminSystemsAPI,
+  // Role APIs
+  getAdminRoles: getAdminRolesAPI,
+  getAdminRole: getAdminRoleAPI,
+  createAdminRole: createAdminRoleAPI,
+  updateAdminRole: updateAdminRoleAPI,
+  deleteAdminRole: deleteAdminRoleAPI,
+  assignPermissionsToRole: assignPermissionsToRoleAPI,
   // Permission APIs
   getAdminPermissions: getAdminPermissionsAPI,
   getAdminPermission: getAdminPermissionAPI,

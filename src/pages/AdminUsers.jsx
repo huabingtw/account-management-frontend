@@ -1,25 +1,26 @@
 import React, { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, Link, useSearchParams } from 'react-router-dom'
 import { getAdminUsersAPI, deleteAdminUserAPI } from '../services/api'
 import { useAuth } from '../hooks/useAuth'
 
 export default function AdminUsers() {
   const navigate = useNavigate()
+  const [searchParams, setSearchParams] = useSearchParams()
   const { user } = useAuth()
   const [users, setUsers] = useState([])
   const [pagination, setPagination] = useState({})
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
-  const [currentPage, setCurrentPage] = useState(1)
-  const [perPage, setPerPage] = useState(10)
+  const [currentPage, setCurrentPage] = useState(parseInt(searchParams.get('page')) || 1)
+  const [perPage, setPerPage] = useState(parseInt(searchParams.get('per_page')) || 10)
 
   // Filter 狀態
   const [filters, setFilters] = useState({
-    filter_name: '',
-    filter_email: '',
-    filter_mobile: '',
-    role: '',
-    two_factor_enabled: ''
+    filter_name: searchParams.get('filter_name') || '',
+    filter_email: searchParams.get('filter_email') || '',
+    filter_mobile: searchParams.get('filter_mobile') || '',
+    role: searchParams.get('role') || '',
+    two_factor_enabled: searchParams.get('two_factor_enabled') || ''
   })
 
   // 響應式 filter 面板顯示狀態
@@ -79,6 +80,16 @@ export default function AdminUsers() {
   const handleFilter = () => {
     setCurrentPage(1)
     loadUsers(1, filters)
+    // 更新 URL 參數
+    const params = new URLSearchParams()
+    params.set('page', '1')
+    params.set('per_page', perPage.toString())
+    Object.keys(filters).forEach(key => {
+      if (filters[key] && filters[key] !== '') {
+        params.set(key, filters[key])
+      }
+    })
+    setSearchParams(params)
   }
 
   const handleFilterReset = () => {
@@ -92,17 +103,42 @@ export default function AdminUsers() {
     setFilters(resetFilters)
     setCurrentPage(1)
     loadUsers(1, resetFilters)
+    // 清除 URL 參數，只保留基本分頁
+    const params = new URLSearchParams()
+    params.set('page', '1')
+    params.set('per_page', perPage.toString())
+    setSearchParams(params)
   }
 
   const handlePageChange = (page) => {
     setCurrentPage(page)
     loadUsers(page, filters)
+    // 更新 URL 中的頁碼
+    const params = new URLSearchParams()
+    params.set('page', page.toString())
+    params.set('per_page', perPage.toString())
+    Object.keys(filters).forEach(key => {
+      if (filters[key] && filters[key] !== '') {
+        params.set(key, filters[key])
+      }
+    })
+    setSearchParams(params)
   }
 
   const handlePerPageChange = (newPerPage) => {
     setPerPage(newPerPage)
     setCurrentPage(1) // 重置到第一頁
     loadUsers(1, filters, newPerPage)
+    // 更新 URL 中的每頁筆數
+    const params = new URLSearchParams()
+    params.set('page', '1')
+    params.set('per_page', newPerPage.toString())
+    Object.keys(filters).forEach(key => {
+      if (filters[key] && filters[key] !== '') {
+        params.set(key, filters[key])
+      }
+    })
+    setSearchParams(params)
   }
 
   const handleDelete = async (userUuid) => {
@@ -407,17 +443,17 @@ export default function AdminUsers() {
                                 </button>
                                 {canEdit && (
                                   <>
-                                    <button
-                                      onClick={() => navigate(`/admin/users/${userItem.uuid}/edit`)}
+                                    <Link
+                                      to={`/admin/users/${userItem.id}/edit`}
                                       className="btn btn-ghost btn-xs"
                                       title="編輯"
                                     >
                                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                                       </svg>
-                                    </button>
+                                    </Link>
                                     <button
-                                      onClick={() => handleDelete(userItem.uuid)}
+                                      onClick={() => handleDelete(userItem.id)}
                                       className="btn btn-ghost btn-xs text-error"
                                       title="刪除"
                                     >
