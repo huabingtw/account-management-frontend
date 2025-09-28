@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { getUserProfileAPI } from '../services/api'
 import { useAuth } from '../hooks/useAuth'
+import TwoFactorAuth from '../components/TwoFactorAuth'
 
 export default function Profile() {
   const navigate = useNavigate()
@@ -381,8 +382,11 @@ export default function Profile() {
                 >
                   🔒 變更密碼
                 </button>
-                <button className="btn btn-outline w-full">
-                  📱 雙因子驗證
+                <button
+                  className="btn btn-outline w-full"
+                  onClick={() => navigate('/device-security')}
+                >
+                  🛡️ 裝置安全
                 </button>
                 <button className="btn btn-outline w-full">
                   🔑 API 金鑰
@@ -390,6 +394,9 @@ export default function Profile() {
               </div>
             </div>
           </div>
+
+          {/* 雙因子驗證 */}
+          <TwoFactorAuth />
 
           {/* 帳戶狀態 */}
           <div className="card bg-base-100 shadow-xl">

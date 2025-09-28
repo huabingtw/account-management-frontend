@@ -12,7 +12,8 @@
       "Bash(findstr:*)",
       "Bash(npm run dev:local:*)",
       "Bash(timeout:*)",
-      "Bash(tasklist:*)"
+      "Bash(tasklist:*)",
+      "Bash(npm run build:local:*)"
     ],
     "deny": [],
     "ask": []

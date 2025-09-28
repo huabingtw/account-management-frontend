@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { changePasswordAPI } from '../services/api'
 
 export default function ChangePassword() {
   const navigate = useNavigate()
@@ -62,8 +63,8 @@ export default function ChangePassword() {
     setIsSubmitting(true)
 
     try {
-      // 模擬 API 呼叫
-      await new Promise(resolve => setTimeout(resolve, 1500))
+      // 呼叫變更密碼 API
+      await changePasswordAPI(formData.currentPassword, formData.newPassword, formData.confirmPassword)
 
       // 顯示成功訊息
       alert('密碼變更成功！請重新登入。')
@@ -72,7 +73,20 @@ export default function ChangePassword() {
       navigate('/profile')
     } catch (error) {
       console.error('密碼變更失敗:', error)
-      setErrors({ submit: '密碼變更失敗，請稍後再試' })
+
+      // 根據錯誤狀態碼顯示不同的錯誤訊息
+      let errorMessage = '密碼變更失敗，請稍後再試'
+      if (error.status === 400) {
+        errorMessage = '密碼格式不正確或目前密碼錯誤'
+      } else if (error.status === 401) {
+        errorMessage = '目前密碼不正確'
+      } else if (error.status === 422) {
+        errorMessage = '新密碼不符合安全要求'
+      } else if (error.status === 0) {
+        errorMessage = error.message || '網路連線失敗'
+      }
+
+      setErrors({ submit: errorMessage })
     } finally {
       setIsSubmitting(false)
     }

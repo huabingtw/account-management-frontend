@@ -165,10 +165,316 @@ export const googleLoginAPI = async (googleToken) => {
   })
 }
 
+// 變更密碼 API (簡化版，不需要 2FA 驗證碼)
+export const changePasswordAPI = async (currentPassword, newPassword, confirmPassword) => {
+  return apiRequest('/change-password', {
+    method: 'POST',
+    body: JSON.stringify({
+      current_password: currentPassword,
+      new_password: newPassword,
+      new_password_confirmation: confirmPassword,
+    }),
+  })
+}
+
+// 忘記密碼 API
+export const forgotPasswordAPI = async (email) => {
+  return apiRequest('/forgot-password', {
+    method: 'POST',
+    body: JSON.stringify({
+      email,
+    }),
+  })
+}
+
+// 重設密碼 API
+export const resetPasswordAPI = async (token, email, password, passwordConfirmation) => {
+  return apiRequest('/reset-password', {
+    method: 'POST',
+    body: JSON.stringify({
+      token,
+      email,
+      password,
+      password_confirmation: passwordConfirmation,
+    }),
+  })
+}
+
+// ============ 2FA 相關 API ============
+
+// 發送 2FA 驗證碼
+export const send2FACodeAPI = async (type, deviceId = null, metadata = {}) => {
+  return apiRequest('/2fa/send-code', {
+    method: 'POST',
+    body: JSON.stringify({
+      type,
+      device_id: deviceId,
+      metadata,
+    }),
+  })
+}
+
+// 驗證 2FA 驗證碼
+export const verify2FACodeAPI = async (verificationId, code) => {
+  return apiRequest('/2fa/verify-code', {
+    method: 'POST',
+    body: JSON.stringify({
+      verification_id: verificationId,
+      code,
+    }),
+  })
+}
+
+// 檢查 2FA 狀態
+export const check2FAStatusAPI = async (deviceId = null) => {
+  const params = deviceId ? `?device_id=${deviceId}` : ''
+  return apiRequest(`/2fa/status${params}`)
+}
+
+// 啟用/停用 2FA
+export const toggle2FAAPI = async (enabled, verificationCode = null) => {
+  return apiRequest('/2fa/toggle', {
+    method: 'POST',
+    body: JSON.stringify({
+      enabled,
+      verification_code: verificationCode,
+    }),
+  })
+}
+
+// 完成 2FA 登入
+export const complete2FALoginAPI = async (verificationId, code) => {
+  return apiRequest('/complete-2fa-login', {
+    method: 'POST',
+    body: JSON.stringify({
+      verification_id: verificationId,
+      code,
+    }),
+  })
+}
+
+// ============ 裝置管理 API ============
+
+// 取得裝置列表
+export const getDevicesAPI = async () => {
+  return apiRequest('/devices')
+}
+
+// 設為信任裝置
+export const trustDeviceAPI = async (deviceId) => {
+  return apiRequest(`/devices/${deviceId}/trust`, {
+    method: 'POST',
+  })
+}
+
+// 移除信任狀態
+export const removeTrustDeviceAPI = async (deviceId) => {
+  return apiRequest(`/devices/${deviceId}/trust`, {
+    method: 'DELETE',
+  })
+}
+
+// 撤銷裝置
+export const revokeDeviceAPI = async (deviceId) => {
+  return apiRequest(`/devices/${deviceId}`, {
+    method: 'DELETE',
+  })
+}
+
+// 撤銷其他裝置
+export const revokeOtherDevicesAPI = async () => {
+  return apiRequest('/devices/revoke-others', {
+    method: 'POST',
+  })
+}
+
+// 更新裝置名稱
+export const updateDeviceNameAPI = async (deviceId, deviceName) => {
+  return apiRequest(`/devices/${deviceId}/name`, {
+    method: 'PUT',
+    body: JSON.stringify({
+      device_name: deviceName,
+    }),
+  })
+}
+
+// ============ 管理員功能 API ============
+
+// 取得使用者列表 (分頁)
+export const getAdminUsersAPI = async (page = 1, perPage = 15, search = '', filterParams = '') => {
+  // 參考 OpenCart 的做法，建構基本查詢字串
+  let url = `page=${page}&per_page=${perPage}`
+
+  // 舊式搜尋參數（向下相容）
+  if (search) {
+    url += '&search=' + encodeURIComponent(search)
+  }
+
+  // 添加 filter 參數（以 & 開頭的字串）
+  if (filterParams) {
+    url += filterParams
+  }
+
+  return apiRequest(`/admin/users?${url}`)
+}
+
+// 取得指定使用者詳細資料
+export const getAdminUserAPI = async (uuid) => {
+  return apiRequest(`/admin/users/${uuid}`)
+}
+
+// 更新指定使用者資料
+export const updateAdminUserAPI = async (uuid, userData) => {
+  return apiRequest(`/admin/users/${uuid}`, {
+    method: 'PUT',
+    body: JSON.stringify(userData),
+  })
+}
+
+// 刪除指定使用者
+export const deleteAdminUserAPI = async (uuid) => {
+  return apiRequest(`/admin/users/${uuid}`, {
+    method: 'DELETE',
+  })
+}
+
+// 重設指定使用者密碼
+export const resetAdminUserPasswordAPI = async (uuid, newPassword, confirmPassword) => {
+  return apiRequest(`/admin/users/${uuid}/reset-password`, {
+    method: 'POST',
+    body: JSON.stringify({
+      new_password: newPassword,
+      new_password_confirmation: confirmPassword,
+    }),
+  })
+}
+
+// 分配角色給使用者 (單一角色)
+export const assignRoleToUserAPI = async (uuid, roleId) => {
+  return apiRequest(`/admin/users/${uuid}/assign-role`, {
+    method: 'POST',
+    body: JSON.stringify({
+      role_id: roleId,
+    }),
+  })
+}
+
+// 管理使用者系統權限
+export const manageUserSystemsAPI = async (uuid, systemIds) => {
+  return apiRequest(`/admin/users/${uuid}/manage-systems`, {
+    method: 'POST',
+    body: JSON.stringify({
+      systems: systemIds,
+    }),
+  })
+}
+
+// 管理使用者 2FA 設定
+export const manageUser2FAAPI = async (uuid, enabled, resetTrustedDevices = false) => {
+  return apiRequest(`/admin/users/${uuid}/manage-2fa`, {
+    method: 'POST',
+    body: JSON.stringify({
+      two_factor_enabled: enabled,
+      reset_trusted_devices: resetTrustedDevices,
+    }),
+  })
+}
+
+// 取得角色列表
+export const getAdminRolesAPI = async () => {
+  return apiRequest('/admin/roles')
+}
+
+// 取得系統列表
+export const getAdminSystemsAPI = async () => {
+  return apiRequest('/admin/systems')
+}
+
+// ============ 權限管理 API ============
+
+// 取得權限列表 (分頁)
+export const getAdminPermissionsAPI = async (page = 1, perPage = 10, search = '', filterParams = '') => {
+  // 參考 OpenCart 的做法，建構基本查詢字串
+  let url = `page=${page}&limit=${perPage}`
+
+  // 舊式搜尋參數（向下相容）
+  if (search) {
+    url += '&search=' + encodeURIComponent(search)
+  }
+
+  // 添加 filter 參數（以 & 開頭的字串）
+  if (filterParams) {
+    url += filterParams
+  }
+
+  return apiRequest(`/admin/permissions?${url}`)
+}
+
+// 取得指定權限詳細資料
+export const getAdminPermissionAPI = async (id) => {
+  return apiRequest(`/admin/permissions/${id}`)
+}
+
+// 建立新權限
+export const createAdminPermissionAPI = async (permissionData) => {
+  return apiRequest('/admin/permissions', {
+    method: 'POST',
+    body: JSON.stringify(permissionData),
+  })
+}
+
+// 更新指定權限資料
+export const updateAdminPermissionAPI = async (id, permissionData) => {
+  return apiRequest(`/admin/permissions/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify(permissionData),
+  })
+}
+
+// 刪除指定權限
+export const deleteAdminPermissionAPI = async (id) => {
+  return apiRequest(`/admin/permissions/${id}`, {
+    method: 'DELETE',
+  })
+}
+
 export default {
   login: loginAPI,
   logout: logoutAPI,
   getUser: getUserAPI,
   getUserProfile: getUserProfileAPI,
   googleLogin: googleLoginAPI,
+  changePassword: changePasswordAPI,
+  forgotPassword: forgotPasswordAPI,
+  resetPassword: resetPasswordAPI,
+  // 2FA APIs
+  send2FACode: send2FACodeAPI,
+  verify2FACode: verify2FACodeAPI,
+  check2FAStatus: check2FAStatusAPI,
+  toggle2FA: toggle2FAAPI,
+  complete2FALogin: complete2FALoginAPI,
+  // Device APIs
+  getDevices: getDevicesAPI,
+  trustDevice: trustDeviceAPI,
+  removeTrustDevice: removeTrustDeviceAPI,
+  revokeDevice: revokeDeviceAPI,
+  revokeOtherDevices: revokeOtherDevicesAPI,
+  updateDeviceName: updateDeviceNameAPI,
+  // Admin APIs
+  getAdminUsers: getAdminUsersAPI,
+  getAdminUser: getAdminUserAPI,
+  updateAdminUser: updateAdminUserAPI,
+  deleteAdminUser: deleteAdminUserAPI,
+  resetAdminUserPassword: resetAdminUserPasswordAPI,
+  assignRoleToUser: assignRoleToUserAPI,
+  manageUserSystems: manageUserSystemsAPI,
+  manageUser2FA: manageUser2FAAPI,
+  getAdminRoles: getAdminRolesAPI,
+  getAdminSystems: getAdminSystemsAPI,
+  // Permission APIs
+  getAdminPermissions: getAdminPermissionsAPI,
+  getAdminPermission: getAdminPermissionAPI,
+  createAdminPermission: createAdminPermissionAPI,
+  updateAdminPermission: updateAdminPermissionAPI,
+  deleteAdminPermission: deleteAdminPermissionAPI,
 }

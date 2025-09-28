@@ -4,6 +4,8 @@ import { AuthProvider } from './hooks/useAuth.jsx'
 import { LoginGuard, AuthenticatedGuard } from './components/AuthGuard'
 import MainLayout from './layouts/MainLayout'
 import Login from './pages/Login'
+import ForgotPassword from './pages/ForgotPassword'
+import ResetPassword from './pages/ResetPassword'
 import Dashboard from './pages/Dashboard'
 import Profile from './pages/Profile'
 import ChangePassword from './pages/ChangePassword'
@@ -12,6 +14,11 @@ import DeviceSecurity from './pages/DeviceSecurity'
 import PermissionManagement from './pages/PermissionManagement'
 import RoleManagement from './pages/RoleManagement'
 import UserRoleManagement from './pages/UserRoleManagement'
+import AdminUsers from './pages/AdminUsers'
+import AdminUserEdit from './pages/AdminUserEdit'
+import AdminPermissions from './pages/AdminPermissions'
+import AdminSystems from './pages/AdminSystems'
+import AdminOAuthClients from './pages/AdminOAuthClients'
 
 function App() {
   return (
@@ -24,6 +31,26 @@ function App() {
             element={
               <LoginGuard>
                 <Login />
+              </LoginGuard>
+            }
+          />
+
+          {/* 忘記密碼頁面 - 已登入用戶會被重導向到 dashboard */}
+          <Route
+            path="/forgot-password"
+            element={
+              <LoginGuard>
+                <ForgotPassword />
+              </LoginGuard>
+            }
+          />
+
+          {/* 重設密碼頁面 - 已登入用戶會被重導向到 dashboard */}
+          <Route
+            path="/reset-password"
+            element={
+              <LoginGuard>
+                <ResetPassword />
               </LoginGuard>
             }
           />
@@ -54,14 +81,6 @@ function App() {
             }
           />
           <Route
-            path="/system-access"
-            element={
-              <AuthenticatedGuard permission="systems.assign">
-                <MainLayout><SystemAccess /></MainLayout>
-              </AuthenticatedGuard>
-            }
-          />
-          <Route
             path="/device-security"
             element={
               <AuthenticatedGuard>
@@ -70,11 +89,45 @@ function App() {
             }
           />
 
-          {/* 權限管理頁面 - 需要相應權限 */}
+          {/* 進階管理頁面 - super_admin, admin 或 inspector 角色 */}
+          <Route
+            path="/admin/users"
+            element={
+              <AuthenticatedGuard anyRole={['super_admin', 'admin', 'inspector']}>
+                <MainLayout><AdminUsers /></MainLayout>
+              </AuthenticatedGuard>
+            }
+          />
+          <Route
+            path="/admin/users/:uuid/edit"
+            element={
+              <AuthenticatedGuard anyRole={['super_admin', 'admin', 'inspector']}>
+                <MainLayout><AdminUserEdit /></MainLayout>
+              </AuthenticatedGuard>
+            }
+          />
+          <Route
+            path="/admin/permissions"
+            element={
+              <AuthenticatedGuard anyRole={['super_admin', 'admin', 'inspector']}>
+                <MainLayout><AdminPermissions /></MainLayout>
+              </AuthenticatedGuard>
+            }
+          />
+
+          {/* 系統管理頁面 - 需要 super_admin 角色 */}
+          <Route
+            path="/system-access"
+            element={
+              <AuthenticatedGuard anyRole={['super_admin']}>
+                <MainLayout><SystemAccess /></MainLayout>
+              </AuthenticatedGuard>
+            }
+          />
           <Route
             path="/permissions"
             element={
-              <AuthenticatedGuard permission="roles.manage">
+              <AuthenticatedGuard anyRole={['super_admin']}>
                 <MainLayout><PermissionManagement /></MainLayout>
               </AuthenticatedGuard>
             }
@@ -82,7 +135,7 @@ function App() {
           <Route
             path="/roles"
             element={
-              <AuthenticatedGuard permission="roles.manage">
+              <AuthenticatedGuard anyRole={['super_admin']}>
                 <MainLayout><RoleManagement /></MainLayout>
               </AuthenticatedGuard>
             }
@@ -90,8 +143,24 @@ function App() {
           <Route
             path="/user-roles"
             element={
-              <AuthenticatedGuard permission="users.manage">
+              <AuthenticatedGuard anyRole={['super_admin']}>
                 <MainLayout><UserRoleManagement /></MainLayout>
+              </AuthenticatedGuard>
+            }
+          />
+          <Route
+            path="/admin/systems"
+            element={
+              <AuthenticatedGuard anyRole={['super_admin']}>
+                <MainLayout><AdminSystems /></MainLayout>
+              </AuthenticatedGuard>
+            }
+          />
+          <Route
+            path="/admin/oauth-clients"
+            element={
+              <AuthenticatedGuard anyRole={['super_admin']}>
+                <MainLayout><AdminOAuthClients /></MainLayout>
               </AuthenticatedGuard>
             }
           />

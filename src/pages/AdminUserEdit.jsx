@@ -1,0 +1,633 @@
+import React, { useState, useEffect } from 'react'
+import { useParams, useNavigate } from 'react-router-dom'
+import {
+  getAdminUserAPI,
+  updateAdminUserAPI,
+  resetAdminUserPasswordAPI,
+  assignRoleToUserAPI,
+  manageUserSystemsAPI,
+  manageUser2FAAPI,
+  getAdminRolesAPI,
+  getAdminSystemsAPI
+} from '../services/api'
+import { useAuth } from '../hooks/useAuth'
+
+export default function AdminUserEdit() {
+  const { uuid } = useParams()
+  const navigate = useNavigate()
+  const { user: currentUser } = useAuth()
+  const [user, setUser] = useState(null)
+  const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState(null)
+  const [success, setSuccess] = useState(null)
+
+  // 角色和系統資料
+  const [roles, setRoles] = useState([])
+  const [systems, setSystems] = useState([])
+  const [selectedRole, setSelectedRole] = useState('')
+  const [selectedSystems, setSelectedSystems] = useState([])
+
+  // 檢查用戶是否有編輯權限（super_admin 和 admin 可以編輯）
+  const canEdit = currentUser?.roles?.some(role => ['super_admin', 'admin'].includes(role)) || false
+  const isReadOnly = !canEdit
+
+  // 表單資料
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    display_name: '',
+    mobile: '',
+    two_factor_enabled: false
+  })
+
+  // 密碼重設
+  const [showPasswordReset, setShowPasswordReset] = useState(false)
+  const [passwordData, setPasswordData] = useState({
+    new_password: '',
+    new_password_confirmation: ''
+  })
+
+  const loadInitialData = async () => {
+    try {
+      setLoading(true)
+      setError(null)
+
+      // 並行載入使用者、角色和系統資料
+      const [userResponse, rolesResponse, systemsResponse] = await Promise.all([
+        getAdminUserAPI(uuid),
+        getAdminRolesAPI(),
+        getAdminSystemsAPI()
+      ])
+
+      if (userResponse.success) {
+        const userData = userResponse.data
+        setUser(userData)
+        setFormData({
+          name: userData.name || '',
+          email: userData.email || '',
+          display_name: userData.display_name || '',
+          mobile: userData.mobile || '',
+          two_factor_enabled: userData.two_factor_enabled || false
+        })
+
+        // 設定使用者目前的角色 (單一角色)
+        if (userData.roles && userData.roles.length > 0) {
+          setSelectedRole(userData.roles[0].id.toString())
+        }
+
+        // 設定使用者目前的系統權限
+        if (userData.systems && userData.systems.length > 0) {
+          setSelectedSystems(userData.systems.map(system => system.id.toString()))
+        }
+      }
+
+      // 載入角色列表
+      if (rolesResponse.success) {
+        setRoles(rolesResponse.data)
+      }
+
+      // 載入系統列表
+      if (systemsResponse.success) {
+        setSystems(systemsResponse.data)
+      }
+    } catch (err) {
+      setError(err.message || '載入使用者資料失敗')
+      console.error('Load user error:', err)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    if (uuid) {
+      loadInitialData()
+    }
+  }, [uuid])
+
+  const handleInputChange = (e) => {
+    const { name, value, type, checked } = e.target
+    setFormData(prev => ({
+      ...prev,
+      [name]: type === 'checkbox' ? checked : value
+    }))
+  }
+
+  const handlePasswordChange = (e) => {
+    const { name, value } = e.target
+    setPasswordData(prev => ({
+      ...prev,
+      [name]: value
+    }))
+  }
+
+  // 處理角色變更 (單一角色)
+  const handleRoleChange = async (roleId) => {
+    if (!canEdit) return
+
+    try {
+      setSaving(true)
+      setError(null)
+
+      const response = await assignRoleToUserAPI(uuid, roleId)
+      if (response.success) {
+        setSelectedRole(roleId)
+        setSuccess('角色更新成功')
+        // 重新載入用戶資料以反映變更
+        setTimeout(() => loadInitialData(), 1000)
+      }
+    } catch (err) {
+      setError(err.message || '角色更新失敗')
+      console.error('Assign role error:', err)
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  // 處理系統權限變更
+  const handleSystemsChange = async (systemIds) => {
+    if (!canEdit) return
+
+    try {
+      setSaving(true)
+      setError(null)
+
+      const response = await manageUserSystemsAPI(uuid, systemIds)
+      if (response.success) {
+        setSelectedSystems(systemIds)
+        setSuccess('系統權限更新成功')
+      }
+    } catch (err) {
+      setError(err.message || '系統權限更新失敗')
+      console.error('Manage systems error:', err)
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  // 處理 2FA 設定變更
+  const handle2FAChange = async (enabled) => {
+    if (!canEdit) return
+
+    try {
+      setSaving(true)
+      setError(null)
+
+      const response = await manageUser2FAAPI(uuid, enabled)
+      if (response.success) {
+        setFormData(prev => ({ ...prev, two_factor_enabled: enabled }))
+        setSuccess('2FA 設定更新成功')
+      }
+    } catch (err) {
+      setError(err.message || '2FA 設定更新失敗')
+      console.error('Manage 2FA error:', err)
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+
+    try {
+      setSaving(true)
+      setError(null)
+      setSuccess(null)
+
+      const response = await updateAdminUserAPI(uuid, formData)
+
+      if (response.success) {
+        setSuccess('使用者資料更新成功')
+        setUser(response.data)
+      }
+    } catch (err) {
+      setError(err.message || '更新使用者資料失敗')
+      console.error('Update user error:', err)
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const handlePasswordReset = async (e) => {
+    e.preventDefault()
+
+    if (passwordData.new_password !== passwordData.new_password_confirmation) {
+      setError('新密碼與確認密碼不符')
+      return
+    }
+
+    if (passwordData.new_password.length < 8) {
+      setError('密碼長度至少需要 8 個字元')
+      return
+    }
+
+    try {
+      setSaving(true)
+      setError(null)
+      setSuccess(null)
+
+      const response = await resetAdminUserPasswordAPI(
+        uuid,
+        passwordData.new_password,
+        passwordData.new_password_confirmation
+      )
+
+      if (response.success) {
+        setSuccess('密碼重設成功')
+        setPasswordData({ new_password: '', new_password_confirmation: '' })
+        setShowPasswordReset(false)
+      }
+    } catch (err) {
+      setError(err.message || '密碼重設失敗')
+      console.error('Reset password error:', err)
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const formatDate = (dateString) => {
+    if (!dateString) return '-'
+    return new Date(dateString).toLocaleString('zh-TW')
+  }
+
+  if (loading) {
+    return (
+      <div className="p-6">
+        <div className="flex justify-center items-center min-h-96">
+          <span className="loading loading-spinner loading-lg"></span>
+        </div>
+      </div>
+    )
+  }
+
+  if (error && !user) {
+    return (
+      <div className="p-6">
+        <div className="alert alert-error">
+          <span>{error}</span>
+        </div>
+        <button className="btn btn-primary mt-4" onClick={() => navigate('/admin/users')}>
+          回到使用者列表
+        </button>
+      </div>
+    )
+  }
+
+  return (
+    <div className="p-6 max-w-4xl mx-auto">
+      {/* 頁面標題 */}
+      <div className="mb-6">
+        <div className="flex items-center gap-4 mb-2">
+          <button
+            className="btn btn-ghost btn-sm"
+            onClick={() => navigate('/admin/users')}
+          >
+            ← 返回列表
+          </button>
+          <h1 className="text-3xl font-bold text-base-content">
+            {canEdit ? '編輯使用者' : '查看使用者'}
+          </h1>
+        </div>
+        <p className="text-base-content/70">
+          {canEdit ? '修改使用者帳號資訊與設定' : '查看使用者帳號資訊與設定'}
+        </p>
+      </div>
+
+      {/* 訊息顯示 */}
+      {error && (
+        <div className="alert alert-error mb-6">
+          <span>{error}</span>
+        </div>
+      )}
+
+      {success && (
+        <div className="alert alert-success mb-6">
+          <span>{success}</span>
+        </div>
+      )}
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* 使用者基本資訊 */}
+        <div className="lg:col-span-2">
+          <div className="card bg-base-100 shadow-xl">
+            <div className="card-body">
+              <h2 className="card-title">基本資料</h2>
+
+              <form onSubmit={handleSubmit} className="space-y-4">
+                {/* 姓名 */}
+                <div className="form-control">
+                  <label className="label">
+                    <span className="label-text">姓名 *</span>
+                  </label>
+                  <input
+                    type="text"
+                    name="name"
+                    className={`input input-bordered ${isReadOnly ? 'input-disabled' : ''}`}
+                    value={formData.name}
+                    onChange={handleInputChange}
+                    required
+                    disabled={isReadOnly}
+                  />
+                </div>
+
+                {/* 信箱 */}
+                <div className="form-control">
+                  <label className="label">
+                    <span className="label-text">信箱 *</span>
+                  </label>
+                  <input
+                    type="email"
+                    name="email"
+                    className={`input input-bordered ${isReadOnly ? 'input-disabled' : ''}`}
+                    value={formData.email}
+                    onChange={handleInputChange}
+                    required
+                    disabled={isReadOnly}
+                  />
+                </div>
+
+                {/* 顯示名稱 */}
+                <div className="form-control">
+                  <label className="label">
+                    <span className="label-text">顯示名稱</span>
+                  </label>
+                  <input
+                    type="text"
+                    name="display_name"
+                    className={`input input-bordered ${isReadOnly ? 'input-disabled' : ''}`}
+                    value={formData.display_name}
+                    onChange={handleInputChange}
+                    placeholder="選填，用於顯示的名稱"
+                    disabled={isReadOnly}
+                  />
+                </div>
+
+                {/* 手機 */}
+                <div className="form-control">
+                  <label className="label">
+                    <span className="label-text">手機</span>
+                  </label>
+                  <input
+                    type="tel"
+                    name="mobile"
+                    className={`input input-bordered ${isReadOnly ? 'input-disabled' : ''}`}
+                    value={formData.mobile}
+                    onChange={handleInputChange}
+                    placeholder="選填"
+                    disabled={isReadOnly}
+                  />
+                </div>
+
+                {/* 安全設定 */}
+                <div className="divider">安全設定</div>
+
+                <div className="form-control">
+                  <label className="label cursor-pointer">
+                    <span className="label-text">
+                      啟用雙因子驗證 (2FA)
+                      <div className="text-xs text-base-content/70 mt-1">
+                        管理員控制此使用者是否必須使用雙因子驗證
+                      </div>
+                    </span>
+                    <input
+                      type="checkbox"
+                      className="toggle toggle-primary"
+                      checked={formData.two_factor_enabled}
+                      onChange={(e) => handle2FAChange(e.target.checked)}
+                      disabled={isReadOnly}
+                    />
+                  </label>
+                </div>
+
+                {/* 角色管理 */}
+                <div className="divider">角色與權限</div>
+
+                <div className="form-control">
+                  <label className="label">
+                    <span className="label-text">
+                      使用者角色 *
+                      <div className="text-xs text-base-content/70 mt-1">
+                        每個使用者只能有一個角色
+                      </div>
+                    </span>
+                  </label>
+                  <select
+                    className={`select select-bordered ${isReadOnly ? 'select-disabled' : ''}`}
+                    value={selectedRole}
+                    onChange={(e) => handleRoleChange(e.target.value)}
+                    disabled={isReadOnly}
+                  >
+                    <option value="">請選擇角色</option>
+                    {roles.map(role => (
+                      <option key={role.id} value={role.id}>
+                        {role.display_name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* 系統權限管理 */}
+                <div className="form-control">
+                  <label className="label">
+                    <span className="label-text">
+                      可存取系統
+                      <div className="text-xs text-base-content/70 mt-1">
+                        選擇使用者可以存取的系統
+                      </div>
+                    </span>
+                  </label>
+                  <div className="space-y-2">
+                    {systems.map(system => (
+                      <label key={system.id} className="label cursor-pointer justify-start gap-3">
+                        <input
+                          type="checkbox"
+                          className="checkbox checkbox-primary"
+                          checked={selectedSystems.includes(system.id.toString())}
+                          onChange={(e) => {
+                            const systemId = system.id.toString()
+                            const newSystems = e.target.checked
+                              ? [...selectedSystems, systemId]
+                              : selectedSystems.filter(id => id !== systemId)
+                            handleSystemsChange(newSystems)
+                          }}
+                          disabled={isReadOnly}
+                        />
+                        <div>
+                          <div className="font-medium">{system.name}</div>
+                          {system.description && (
+                            <div className="text-xs text-base-content/70">{system.description}</div>
+                          )}
+                        </div>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+
+                {/* 提交按鈕 */}
+                <div className="card-actions justify-end pt-4">
+                  <button
+                    type="button"
+                    className="btn btn-ghost"
+                    onClick={() => navigate('/admin/users')}
+                  >
+                    {canEdit ? '取消' : '返回'}
+                  </button>
+                  {canEdit && (
+                    <button
+                      type="submit"
+                      className={`btn btn-primary ${saving ? 'loading' : ''}`}
+                      disabled={saving}
+                    >
+                      {saving ? '儲存中...' : '儲存變更'}
+                    </button>
+                  )}
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+
+        {/* 側邊欄資訊 */}
+        <div className="space-y-6">
+          {/* 使用者摘要 */}
+          <div className="card bg-base-100 shadow-xl">
+            <div className="card-body">
+              <h3 className="card-title">使用者摘要</h3>
+
+              <div className="space-y-3">
+                <div>
+                  <div className="text-sm text-base-content/70">UUID</div>
+                  <div className="font-mono text-xs break-all">{user?.uuid}</div>
+                </div>
+
+                <div>
+                  <div className="text-sm text-base-content/70">註冊時間</div>
+                  <div className="text-sm">{formatDate(user?.created_at)}</div>
+                </div>
+
+                <div>
+                  <div className="text-sm text-base-content/70">最後更新</div>
+                  <div className="text-sm">{formatDate(user?.updated_at)}</div>
+                </div>
+
+                <div>
+                  <div className="text-sm text-base-content/70">目前角色</div>
+                  <div className="text-sm">
+                    {user?.roles && user.roles.length > 0 ? (
+                      <span className="badge badge-primary badge-sm">
+                        {user.roles[0].display_name}
+                      </span>
+                    ) : (
+                      <span className="text-base-content/50">無角色</span>
+                    )}
+                  </div>
+                </div>
+
+                <div>
+                  <div className="text-sm text-base-content/70">可存取系統</div>
+                  <div className="text-sm">
+                    {user?.systems && user.systems.length > 0 ? (
+                      <div className="flex flex-wrap gap-1 mt-1">
+                        {user.systems.map(system => (
+                          <span key={system.id} className="badge badge-outline badge-xs">
+                            {system.name}
+                          </span>
+                        ))}
+                      </div>
+                    ) : (
+                      <span className="text-base-content/50">無系統權限</span>
+                    )}
+                  </div>
+                </div>
+
+                {user?.last_two_factor_at && (
+                  <div>
+                    <div className="text-sm text-base-content/70">最後 2FA 驗證</div>
+                    <div className="text-sm">{formatDate(user.last_two_factor_at)}</div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* 密碼管理 */}
+          {canEdit && (
+            <div className="card bg-base-100 shadow-xl">
+              <div className="card-body">
+                <h3 className="card-title">密碼管理</h3>
+
+                {!showPasswordReset ? (
+                <div>
+                  <p className="text-sm text-base-content/70 mb-4">
+                    為使用者重設密碼。新密碼將立即生效。
+                  </p>
+                  <button
+                    className="btn btn-warning btn-sm w-full"
+                    onClick={() => setShowPasswordReset(true)}
+                  >
+                    🔑 重設密碼
+                  </button>
+                </div>
+              ) : (
+                <form onSubmit={handlePasswordReset} className="space-y-4">
+                  <div className="form-control">
+                    <label className="label">
+                      <span className="label-text">新密碼</span>
+                    </label>
+                    <input
+                      type="password"
+                      name="new_password"
+                      className="input input-bordered input-sm"
+                      value={passwordData.new_password}
+                      onChange={handlePasswordChange}
+                      required
+                      minLength="8"
+                      placeholder="至少 8 個字元"
+                    />
+                  </div>
+
+                  <div className="form-control">
+                    <label className="label">
+                      <span className="label-text">確認新密碼</span>
+                    </label>
+                    <input
+                      type="password"
+                      name="new_password_confirmation"
+                      className="input input-bordered input-sm"
+                      value={passwordData.new_password_confirmation}
+                      onChange={handlePasswordChange}
+                      required
+                      minLength="8"
+                      placeholder="再次輸入新密碼"
+                    />
+                  </div>
+
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      className="btn btn-ghost btn-sm flex-1"
+                      onClick={() => {
+                        setShowPasswordReset(false)
+                        setPasswordData({ new_password: '', new_password_confirmation: '' })
+                      }}
+                    >
+                      取消
+                    </button>
+                    <button
+                      type="submit"
+                      className={`btn btn-warning btn-sm flex-1 ${saving ? 'loading' : ''}`}
+                      disabled={saving}
+                    >
+                      {saving ? '重設中...' : '確認重設'}
+                    </button>
+                  </div>
+                </form>
+              )}
+            </div>
+          </div>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}

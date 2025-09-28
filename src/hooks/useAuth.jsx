@@ -268,6 +268,26 @@ export function AuthProvider({ children }) {
     localStorage.removeItem('last_auth_check')
   }
 
+  // 設置認證資料的函數（用於 2FA 登入完成後）
+  const setAuthData = (userData, authToken) => {
+    const userWithRoles = {
+      ...userData,
+      roles: userData.roles || [
+        {
+          id: 1,
+          name: 'user',
+          permissions: []
+        }
+      ]
+    }
+
+    setUser(userWithRoles)
+    setToken(authToken)
+    localStorage.setItem('auth_token', authToken)
+    localStorage.setItem('user_data', JSON.stringify(userWithRoles))
+    localStorage.setItem('last_auth_check', Date.now().toString())
+  }
+
   const switchUser = (userType) => {
     setUser(mockUsers[userType])
   }
@@ -288,15 +308,36 @@ export function AuthProvider({ children }) {
     if (!user || !user.roles) return false
 
     // 檢查使用者的所有角色是否包含該權限
-    return user.roles.some(role =>
-      role.permissions && role.permissions.includes(permission)
-    )
+    return user.roles.some(role => {
+      // 如果是物件格式，檢查 permissions 陣列
+      if (typeof role === 'object' && role.permissions) {
+        return role.permissions.includes(permission)
+      }
+      // 如果是字串格式，基於角色進行簡單權限檢查
+      if (typeof role === 'string') {
+        // super_admin 擁有所有權限
+        if (role === 'super_admin') return true
+        // admin 擁有大部分管理權限
+        if (role === 'admin' && ['users.manage', 'roles.manage', 'systems.assign'].includes(permission)) return true
+        // inspector 只有查看權限
+        if (role === 'inspector' && permission.endsWith('.view')) return true
+      }
+      return false
+    })
   }
 
   const hasRole = (roleName) => {
     if (!user || !user.roles) return false
 
-    return user.roles.some(role => role.name === roleName)
+    // 支援兩種格式：字串陣列或物件陣列
+    return user.roles.some(role => {
+      if (typeof role === 'string') {
+        return role === roleName
+      } else if (typeof role === 'object' && role.name) {
+        return role.name === roleName
+      }
+      return false
+    })
   }
 
   const hasAnyRole = (roleNames) => {
@@ -310,7 +351,24 @@ export function AuthProvider({ children }) {
 
     // 合併所有角色的權限
     const allPermissions = user.roles.reduce((acc, role) => {
-      return [...acc, ...(role.permissions || [])]
+      // 如果是物件格式，取得 permissions 陣列
+      if (typeof role === 'object' && role.permissions) {
+        return [...acc, ...role.permissions]
+      }
+      // 如果是字串格式，根據角色返回預設權限
+      if (typeof role === 'string') {
+        switch (role) {
+          case 'super_admin':
+            return [...acc, 'users.manage', 'roles.manage', 'systems.assign', 'system.manage']
+          case 'admin':
+            return [...acc, 'users.manage', 'roles.manage', 'systems.assign']
+          case 'inspector':
+            return [...acc, 'users.view', 'roles.view', 'systems.view']
+          default:
+            return acc
+        }
+      }
+      return acc
     }, [])
 
     // 去除重複權限
@@ -325,13 +383,14 @@ export function AuthProvider({ children }) {
     login,
     googleLogin,
     logout,
+    setAuthData,
     switchUser,
     hasPermission,
     hasRole,
     hasAnyRole,
     getUserPermissions,
-    isAdmin: hasRole('sys_admin'),
-    isViewer: hasRole('sys_viewer'),
+    isAdmin: hasRole('super_admin') || hasRole('admin'),
+    isViewer: hasRole('inspector'),
     mockUsers
   }
 

@@ -27,34 +27,60 @@ export default function MainLayout({ children }) {
       icon: '📱'
     },
     {
+      label: '進階管理',
+      icon: '🔧',
+      isGroup: true,
+      requireRole: ['super_admin', 'admin', 'inspector'],
+      children: [
+        {
+          path: '/admin/users',
+          label: '使用者管理',
+          icon: '👥',
+          requireRole: ['super_admin', 'admin', 'inspector']
+        }
+      ]
+    },
+    {
       label: '系統管理',
       icon: '⚙️',
       isGroup: true,
-      requireRole: ['sys_admin', 'sys_viewer'],
+      requireRole: ['super_admin'],
       children: [
         {
           path: '/system-access',
           label: '系統授權',
           icon: '🏢',
-          requirePermission: 'systems.assign'
+          requireRole: ['super_admin']
         },
         {
-          path: '/permissions',
+          path: '/admin/permissions',
           label: '權限定義',
           icon: '🔑',
-          requirePermission: 'roles.manage'
+          requireRole: ['super_admin', 'admin', 'inspector']
         },
         {
           path: '/roles',
           label: '角色管理',
           icon: '👑',
-          requirePermission: 'roles.manage'
+          requireRole: ['super_admin']
         },
         {
           path: '/user-roles',
           label: '使用者角色',
           icon: '👥',
-          requirePermission: 'users.manage'
+          requireRole: ['super_admin']
+        },
+        {
+          path: '/admin/systems',
+          label: '系統設定',
+          icon: '🖥️',
+          requireRole: ['super_admin']
+        },
+        {
+          path: '/admin/oauth-clients',
+          label: 'OAuth 客戶端',
+          icon: '🔐',
+          requireRole: ['super_admin']
         }
       ]
     }
