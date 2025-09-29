@@ -402,17 +402,17 @@ export const getAdminRolesAPI = async (page = 1, perPage = 10, search = '', filt
     url += filterParams
   }
 
-  return apiRequest(`/admin/roles?${url}`)
+  return apiRequest(`/sys-admin/role-permission/roles?${url}`)
 }
 
 // 取得指定角色詳細資料
 export const getAdminRoleAPI = async (id) => {
-  return apiRequest(`/admin/roles/${id}`)
+  return apiRequest(`/sys-admin/role-permission/roles/${id}`)
 }
 
 // 建立新角色
 export const createAdminRoleAPI = async (roleData) => {
-  return apiRequest('/admin/roles', {
+  return apiRequest('/sys-admin/role-permission/roles', {
     method: 'POST',
     body: JSON.stringify(roleData),
   })
@@ -420,7 +420,7 @@ export const createAdminRoleAPI = async (roleData) => {
 
 // 更新指定角色資料
 export const updateAdminRoleAPI = async (id, roleData) => {
-  return apiRequest(`/admin/roles/${id}`, {
+  return apiRequest(`/sys-admin/role-permission/roles/${id}`, {
     method: 'PUT',
     body: JSON.stringify(roleData),
   })
@@ -428,19 +428,24 @@ export const updateAdminRoleAPI = async (id, roleData) => {
 
 // 刪除指定角色
 export const deleteAdminRoleAPI = async (id) => {
-  return apiRequest(`/admin/roles/${id}`, {
+  return apiRequest(`/sys-admin/role-permission/roles/${id}`, {
     method: 'DELETE',
   })
 }
 
 // 為角色分配權限
 export const assignPermissionsToRoleAPI = async (roleId, permissionIds) => {
-  return apiRequest(`/admin/roles/${roleId}/permissions`, {
+  return apiRequest(`/sys-admin/role-permission/roles/${roleId}/permissions`, {
     method: 'POST',
     body: JSON.stringify({
       permissions: permissionIds,
     }),
   })
+}
+
+// 取得所有權限供分配使用
+export const getAllPermissionsForRoleAPI = async () => {
+  return apiRequest('/sys-admin/role-permission/roles-permissions')
 }
 
 // ============ 權限管理 API ============
@@ -460,17 +465,17 @@ export const getAdminPermissionsAPI = async (page = 1, perPage = 10, search = ''
     url += filterParams
   }
 
-  return apiRequest(`/admin/permissions?${url}`)
+  return apiRequest(`/sys-admin/role-permission/permissions?${url}`)
 }
 
 // 取得指定權限詳細資料
 export const getAdminPermissionAPI = async (id) => {
-  return apiRequest(`/admin/permissions/${id}`)
+  return apiRequest(`/sys-admin/role-permission/permissions/${id}`)
 }
 
 // 建立新權限
 export const createAdminPermissionAPI = async (permissionData) => {
-  return apiRequest('/admin/permissions', {
+  return apiRequest('/sys-admin/role-permission/permissions', {
     method: 'POST',
     body: JSON.stringify(permissionData),
   })
@@ -478,7 +483,7 @@ export const createAdminPermissionAPI = async (permissionData) => {
 
 // 更新指定權限資料
 export const updateAdminPermissionAPI = async (id, permissionData) => {
-  return apiRequest(`/admin/permissions/${id}`, {
+  return apiRequest(`/sys-admin/role-permission/permissions/${id}`, {
     method: 'PUT',
     body: JSON.stringify(permissionData),
   })
@@ -486,9 +491,166 @@ export const updateAdminPermissionAPI = async (id, permissionData) => {
 
 // 刪除指定權限
 export const deleteAdminPermissionAPI = async (id) => {
-  return apiRequest(`/admin/permissions/${id}`, {
+  return apiRequest(`/sys-admin/role-permission/permissions/${id}`, {
     method: 'DELETE',
   })
+}
+
+// ============ MetaKey 管理 API ============
+
+// 取得 MetaKey 列表 (分頁)
+export const getMetaKeysAPI = async (page = 1, perPage = 15, search = '', entity = '') => {
+  let url = `page=${page}&per_page=${perPage}`
+
+  if (search) {
+    url += '&search=' + encodeURIComponent(search)
+  }
+
+  if (entity) {
+    url += '&entity=' + encodeURIComponent(entity)
+  }
+
+  return apiRequest(`/sys-admin/meta-key?${url}`)
+}
+
+// 取得指定 MetaKey 詳細資料
+export const getMetaKeyAPI = async (id) => {
+  return apiRequest(`/sys-admin/meta-key/${id}`)
+}
+
+// 建立新 MetaKey
+export const createMetaKeyAPI = async (metaKeyData) => {
+  return apiRequest('/sys-admin/meta-key', {
+    method: 'POST',
+    body: JSON.stringify(metaKeyData),
+  })
+}
+
+// 更新指定 MetaKey 資料
+export const updateMetaKeyAPI = async (id, metaKeyData) => {
+  return apiRequest(`/sys-admin/meta-key/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify(metaKeyData),
+  })
+}
+
+// 刪除指定 MetaKey
+export const deleteMetaKeyAPI = async (id) => {
+  return apiRequest(`/sys-admin/meta-key/${id}`, {
+    method: 'DELETE',
+  })
+}
+
+// 取得特定實體的 MetaKey 列表
+export const getMetaKeysByEntityAPI = async (entity) => {
+  return apiRequest(`/sys-admin/meta-key/entity/${entity}`)
+}
+
+// 取得所有實體列表
+export const getMetaKeyEntitiesAPI = async () => {
+  return apiRequest('/sys-admin/meta-key-entities')
+}
+
+// 取得所有資料類型
+export const getMetaKeyDataTypesAPI = async () => {
+  return apiRequest('/sys-admin/meta-key-data-types')
+}
+
+// ==================== Systems API ====================
+
+// 取得系統列表 (分頁)
+export const getSystemsAPI = async (page = 1, limit = 10, filterCode = '', filterName = '', filterDescription = '') => {
+  let url = `page=${page}&limit=${limit}`
+
+  if (filterCode) {
+    url += '&filter_code=' + encodeURIComponent(filterCode)
+  }
+  if (filterName) {
+    url += '&filter_name=' + encodeURIComponent(filterName)
+  }
+  if (filterDescription) {
+    url += '&filter_description=' + encodeURIComponent(filterDescription)
+  }
+
+  return apiRequest(`/sys-admin/systems?${url}`)
+}
+
+// 取得指定系統詳細資料
+export const getSystemAPI = async (id) => {
+  return apiRequest(`/sys-admin/systems/${id}`)
+}
+
+// 建立新系統
+export const createSystemAPI = async (systemData) => {
+  return apiRequest('/sys-admin/systems', {
+    method: 'POST',
+    body: JSON.stringify(systemData),
+  })
+}
+
+// 更新指定系統資料
+export const updateSystemAPI = async (id, systemData) => {
+  return apiRequest(`/sys-admin/systems/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify(systemData),
+  })
+}
+
+// 刪除指定系統
+export const deleteSystemAPI = async (id) => {
+  return apiRequest(`/sys-admin/systems/${id}`, {
+    method: 'DELETE',
+  })
+}
+
+// ==================== Settings API ====================
+
+// 取得 Settings 列表 (分頁)
+export const getSettingsAPI = async (page = 1, limit = 10, filterGroup = '', filterKey = '', filterName = '') => {
+  let url = `page=${page}&limit=${limit}`
+  if (filterGroup) {
+    url += '&filter_group=' + encodeURIComponent(filterGroup)
+  }
+  if (filterKey) {
+    url += '&filter_key=' + encodeURIComponent(filterKey)
+  }
+  if (filterName) {
+    url += '&filter_name=' + encodeURIComponent(filterName)
+  }
+  return apiRequest(`/sys-admin/settings?${url}`)
+}
+
+// 取得單一 Setting
+export const getSettingAPI = async (id) => {
+  return apiRequest(`/sys-admin/settings/${id}`)
+}
+
+// 建立新 Setting
+export const createSettingAPI = async (settingData) => {
+  return apiRequest('/sys-admin/settings', {
+    method: 'POST',
+    body: JSON.stringify(settingData),
+  })
+}
+
+// 更新 Setting
+export const updateSettingAPI = async (id, settingData) => {
+  return apiRequest(`/sys-admin/settings/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify(settingData),
+  })
+}
+
+// 刪除 Setting
+export const deleteSettingAPI = async (id) => {
+  return apiRequest(`/sys-admin/settings/${id}`, {
+    method: 'DELETE',
+  })
+}
+
+// 取得所有群組列表
+export const getSettingsGroupsAPI = async () => {
+  return apiRequest('/sys-admin/settings-groups')
 }
 
 export default {
@@ -536,4 +698,20 @@ export default {
   createAdminPermission: createAdminPermissionAPI,
   updateAdminPermission: updateAdminPermissionAPI,
   deleteAdminPermission: deleteAdminPermissionAPI,
+  // MetaKey APIs
+  getMetaKeys: getMetaKeysAPI,
+  getMetaKey: getMetaKeyAPI,
+  createMetaKey: createMetaKeyAPI,
+  updateMetaKey: updateMetaKeyAPI,
+  deleteMetaKey: deleteMetaKeyAPI,
+  getMetaKeysByEntity: getMetaKeysByEntityAPI,
+  getMetaKeyEntities: getMetaKeyEntitiesAPI,
+  getMetaKeyDataTypes: getMetaKeyDataTypesAPI,
+  // Settings APIs
+  getSettings: getSettingsAPI,
+  getSetting: getSettingAPI,
+  createSetting: createSettingAPI,
+  updateSetting: updateSettingAPI,
+  deleteSetting: deleteSettingAPI,
+  getSettingsGroups: getSettingsGroupsAPI,
 }

@@ -1,24 +1,28 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom'
 import {
   getAdminPermissionAPI,
   createAdminPermissionAPI,
   updateAdminPermissionAPI
-} from '../services/api'
-import { useAuth } from '../hooks/useAuth'
+} from '../../../services/api'
+import { useAuth } from '../../../hooks/useAuth'
+import { useFormHandler } from '../../../utils/formHandler'
 
 export default function AdminPermissionEdit() {
   const { id } = useParams()
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const { user: currentUser } = useAuth()
+  const formRef = useRef(null)
+  const formHandler = useFormHandler({
+    stayOnPage: true,
+    autoNotify: true
+  })
   const [permission, setPermission] = useState(null)
   const [loading, setLoading] = useState(true)
-  const [saving, setSaving] = useState(false)
-  const [error, setError] = useState(null)
-  const [success, setSuccess] = useState(null)
+  const [currentId, setCurrentId] = useState(id) // 追蹤當前 ID 狀態
 
-  const isEditing = id && id !== 'create'
+  const isEditing = currentId && currentId !== 'create'
   const pageTitle = isEditing ? '編輯權限' : '新增權限'
 
   // 檢查用戶是否有編輯權限（super_admin 和 admin 可以編輯）
@@ -59,17 +63,16 @@ export default function AdminPermissionEdit() {
     group: ''
   })
 
-  const loadPermission = async () => {
-    if (!isEditing) {
+  const loadPermission = async (permissionId = currentId) => {
+    if (!permissionId || permissionId === 'create') {
       setLoading(false)
       return
     }
 
     try {
       setLoading(true)
-      setError(null)
 
-      const response = await getAdminPermissionAPI(id)
+      const response = await getAdminPermissionAPI(permissionId)
 
       if (response.success) {
         const permissionData = response.data
@@ -82,7 +85,7 @@ export default function AdminPermissionEdit() {
         })
       }
     } catch (err) {
-      setError(err.message || '載入權限資料失敗')
+      window.notifications.error(err.message || '載入權限資料失敗')
       console.error('Load permission error:', err)
     } finally {
       setLoading(false)
@@ -105,30 +108,37 @@ export default function AdminPermissionEdit() {
     e.preventDefault()
 
     if (!canEdit) {
-      setError('您沒有權限執行此操作')
+      window.notifications.error('您沒有權限執行此操作')
       return
     }
 
     try {
-      setSaving(true)
-      setError(null)
-      setSuccess(null)
+      // 使用 OpenCart 風格的表單提交
+      const submitUrl = isEditing
+        ? `/sys-admin/role-permission/permissions/${currentId}`
+        : '/sys-admin/role-permission/permissions'
 
-      const response = isEditing
-        ? await updateAdminPermissionAPI(id, formData)
-        : await createAdminPermissionAPI(formData)
+      const method = isEditing ? 'PUT' : 'POST'
 
-      if (response.success) {
-        setSuccess(isEditing ? '權限更新成功' : '權限建立成功')
-        setTimeout(() => {
-          navigate(getReturnUrl())
-        }, 1500)
-      }
+      await formHandler.submitForm(formRef.current, {
+        url: submitUrl,
+        method: method,
+        onSuccess: async (response, form) => {
+          // 如果是新增成功，更新當前狀態和 URL
+          if (!isEditing && response.data && response.data.id) {
+            const newId = response.data.id.toString()
+            setCurrentId(newId)
+
+            // 重新載入完整的權限資料
+            await loadPermission(newId)
+          } else if (isEditing) {
+            // 編輯模式下重新載入資料以確保顯示最新狀態
+            await loadPermission(currentId)
+          }
+        }
+      })
     } catch (err) {
-      setError(err.message || '儲存失敗')
       console.error('Save permission error:', err)
-    } finally {
-      setSaving(false)
     }
   }
 
@@ -147,11 +157,11 @@ export default function AdminPermissionEdit() {
     )
   }
 
-  if (isEditing && error && !permission) {
+  if (isEditing && !permission && !loading) {
     return (
       <div className="p-6">
         <div className="alert alert-error">
-          <span>{error}</span>
+          <span>權限不存在或載入失敗</span>
         </div>
         <button className="btn btn-primary mt-4" onClick={() => navigate(getReturnUrl())}>
           回到權限列表
@@ -190,18 +200,7 @@ export default function AdminPermissionEdit() {
         </div>
       </div>
 
-      {/* 訊息顯示 */}
-      {error && (
-        <div className="alert alert-error mb-6">
-          <span>{error}</span>
-        </div>
-      )}
-
-      {success && (
-        <div className="alert alert-success mb-6">
-          <span>{success}</span>
-        </div>
-      )}
+      {/* 通知訊息由 formHandler 自動管理 */}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* 權限表單 */}
@@ -210,7 +209,7 @@ export default function AdminPermissionEdit() {
             <div className="card-body">
               <h2 className="card-title">權限資料</h2>
 
-              <form onSubmit={handleSubmit} className="space-y-6">
+              <form ref={formRef} onSubmit={handleSubmit} className="space-y-6" action={isEditing ? `/api/sys-admin/role-permission/permissions/${currentId}` : '/api/sys-admin/role-permission/permissions'} method={isEditing ? 'PUT' : 'POST'}>
                 {/* 權限代碼 */}
                 <div className="grid grid-cols-12 items-center gap-4">
                   <div className="col-span-3 text-right">
@@ -301,10 +300,9 @@ export default function AdminPermissionEdit() {
                   {canEdit && (
                     <button
                       type="submit"
-                      className={`btn btn-primary ${saving ? 'loading' : ''}`}
-                      disabled={saving}
+                      className="btn btn-primary"
                     >
-                      {saving ? '儲存中...' : (isEditing ? '更新權限' : '建立權限')}
+                      {isEditing ? '更新權限' : '建立權限'}
                     </button>
                   )}
                 </div>

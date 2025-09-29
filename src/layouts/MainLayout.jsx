@@ -47,41 +47,55 @@ export default function MainLayout({ children }) {
       requireRole: ['super_admin'],
       children: [
         {
-          path: '/system-access',
-          label: '系統授權',
+            label: '角色權限',
+            icon: '👑',
+            isGroup: true,
+            requireRole: ['super_admin'],
+            children: [
+                {
+                    path: '/admin/permissions',
+                    label: '權限定義',
+                    icon: '🔑',
+                    requireRole: ['super_admin', 'admin', 'inspector']
+                },
+                {
+                    path: '/admin/roles',
+                    label: '角色管理',
+                    icon: '👑',
+                    requireRole: ['super_admin']
+                },
+                {
+                    path: '/user-roles',
+                    label: '使用者角色',
+                    icon: '👥',
+                    requireRole: ['super_admin']
+                }
+            ]
+        },
+        {
+          path: '/sys-admin/systems',
+          label: '關聯系統',
           icon: '🏢',
           requireRole: ['super_admin']
         },
         {
-          path: '/admin/permissions',
-          label: '權限定義',
-          icon: '🔑',
-          requireRole: ['super_admin', 'admin', 'inspector']
-        },
-        {
-          path: '/admin/roles',
-          label: '角色管理',
-          icon: '👑',
-          requireRole: ['super_admin']
-        },
-        {
-          path: '/user-roles',
-          label: '使用者角色',
-          icon: '👥',
-          requireRole: ['super_admin']
-        },
-        {
-          path: '/admin/systems',
-          label: '系統設定',
+          path: '/sys-admin/settings',
+          label: '參數設定',
           icon: '🖥️',
           requireRole: ['super_admin']
         },
         {
-          path: '/admin/oauth-clients',
-          label: 'OAuth 客戶端',
-          icon: '🔐',
+          path: '/sys-admin/meta-keys',
+          label: '擴充欄位',
+          icon: '🏷️',
           requireRole: ['super_admin']
-        }
+        },
+        // {
+        //   path: '/admin/oauth-clients',
+        //   label: 'OAuth 客戶端',
+        //   icon: '🔐',
+        //   requireRole: ['super_admin']
+        // }
       ]
     }
   ]
@@ -149,27 +163,71 @@ export default function MainLayout({ children }) {
                           <span>{item.label}</span>
                         </summary>
                         <ul className="ml-4 mt-2 space-y-1">
-                          {item.children.map((child) => (
-                            <PermissionGuard
-                              key={child.path}
-                              permission={child.requirePermission}
-                              anyRole={child.requireRole}
-                            >
-                              <li>
-                                <button
-                                  onClick={() => navigate(child.path)}
-                                  className={`flex items-center gap-3 p-2 rounded-lg transition-colors text-sm ${
-                                    location.pathname === child.path
-                                      ? 'bg-primary text-primary-content'
-                                      : 'hover:bg-base-300'
-                                  }`}
+                          {item.children.map((child) => {
+                            if (child.isGroup) {
+                              return (
+                                <PermissionGuard
+                                  key={child.label}
+                                  permission={child.requirePermission}
+                                  anyRole={child.requireRole}
                                 >
-                                  <span>{child.icon}</span>
-                                  <span>{child.label}</span>
-                                </button>
-                              </li>
-                            </PermissionGuard>
-                          ))}
+                                  <li>
+                                    <details>
+                                      <summary className="flex items-center gap-3 p-2 rounded-lg hover:bg-base-300 text-sm">
+                                        <span>{child.icon}</span>
+                                        <span>{child.label}</span>
+                                      </summary>
+                                      <ul className="ml-4 mt-1 space-y-1">
+                                        {child.children.map((grandchild) => (
+                                          <PermissionGuard
+                                            key={grandchild.path}
+                                            permission={grandchild.requirePermission}
+                                            anyRole={grandchild.requireRole}
+                                          >
+                                            <li>
+                                              <button
+                                                onClick={() => navigate(grandchild.path)}
+                                                className={`flex items-center gap-3 p-2 rounded-lg transition-colors text-xs ${
+                                                  location.pathname === grandchild.path
+                                                    ? 'bg-primary text-primary-content'
+                                                    : 'hover:bg-base-300'
+                                                }`}
+                                              >
+                                                <span>{grandchild.icon}</span>
+                                                <span>{grandchild.label}</span>
+                                              </button>
+                                            </li>
+                                          </PermissionGuard>
+                                        ))}
+                                      </ul>
+                                    </details>
+                                  </li>
+                                </PermissionGuard>
+                              )
+                            }
+
+                            return (
+                              <PermissionGuard
+                                key={child.path}
+                                permission={child.requirePermission}
+                                anyRole={child.requireRole}
+                              >
+                                <li>
+                                  <button
+                                    onClick={() => navigate(child.path)}
+                                    className={`flex items-center gap-3 p-2 rounded-lg transition-colors text-sm ${
+                                      location.pathname === child.path
+                                        ? 'bg-primary text-primary-content'
+                                        : 'hover:bg-base-300'
+                                    }`}
+                                  >
+                                    <span>{child.icon}</span>
+                                    <span>{child.label}</span>
+                                  </button>
+                                </li>
+                              </PermissionGuard>
+                            )
+                          })}
                         </ul>
                       </details>
                     </li>

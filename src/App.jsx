@@ -12,15 +12,21 @@ import ChangePassword from './pages/ChangePassword'
 import SystemAccess from './pages/SystemAccess'
 import DeviceSecurity from './pages/DeviceSecurity'
 import PermissionManagement from './pages/PermissionManagement'
-import UserRoleManagement from './pages/UserRoleManagement'
+import UserRoleManagement from './pages/SysAdmin/RolePermission/UserRoles'
 import AdminUsers from './pages/AdminUsers'
 import AdminUserEdit from './pages/AdminUserEdit'
-import AdminPermissions from './pages/AdminPermissions'
-import AdminPermissionEdit from './pages/AdminPermissionEdit'
-import AdminRoles from './pages/AdminRoles'
-import AdminRoleEdit from './pages/AdminRoleEdit'
+import AdminPermissions from './pages/SysAdmin/RolePermission/Permissions'
+import AdminPermissionEdit from './pages/SysAdmin/RolePermission/PermissionEdit'
+import AdminRoles from './pages/SysAdmin/RolePermission/Roles'
+import AdminRoleEdit from './pages/SysAdmin/RolePermission/RoleEdit'
 import AdminSystems from './pages/AdminSystems'
 import AdminOAuthClients from './pages/AdminOAuthClients'
+import SysAdminMetaKeys from './pages/SysAdmin/MetaKeys'
+import SysAdminMetaKeyEdit from './pages/SysAdmin/MetaKeyEdit'
+import SysAdminSettings from './pages/SysAdmin/Settings'
+import SysAdminSettingEdit from './pages/SysAdmin/SettingEdit'
+import SysAdminSystems from './pages/SysAdmin/Systems'
+import SysAdminSystemEdit from './pages/SysAdmin/SystemEdit'
 
 function App() {
   return (
@@ -179,6 +185,56 @@ function App() {
             element={
               <AuthenticatedGuard anyRole={['super_admin']}>
                 <MainLayout><AdminOAuthClients /></MainLayout>
+              </AuthenticatedGuard>
+            }
+          />
+
+          {/* 系統管理路由 */}
+          <Route
+            path="/sys-admin/meta-keys"
+            element={
+              <AuthenticatedGuard anyRole={['super_admin']}>
+                <MainLayout><SysAdminMetaKeys /></MainLayout>
+              </AuthenticatedGuard>
+            }
+          />
+          <Route
+            path="/sys-admin/meta-keys/:id"
+            element={
+              <AuthenticatedGuard anyRole={['super_admin']}>
+                <MainLayout><SysAdminMetaKeyEdit /></MainLayout>
+              </AuthenticatedGuard>
+            }
+          />
+          <Route
+            path="/sys-admin/settings"
+            element={
+              <AuthenticatedGuard anyRole={['super_admin']}>
+                <MainLayout><SysAdminSettings /></MainLayout>
+              </AuthenticatedGuard>
+            }
+          />
+          <Route
+            path="/sys-admin/settings/:id"
+            element={
+              <AuthenticatedGuard anyRole={['super_admin']}>
+                <MainLayout><SysAdminSettingEdit /></MainLayout>
+              </AuthenticatedGuard>
+            }
+          />
+          <Route
+            path="/sys-admin/systems"
+            element={
+              <AuthenticatedGuard anyRole={['super_admin']}>
+                <MainLayout><SysAdminSystems /></MainLayout>
+              </AuthenticatedGuard>
+            }
+          />
+          <Route
+            path="/sys-admin/systems/:id"
+            element={
+              <AuthenticatedGuard anyRole={['super_admin']}>
+                <MainLayout><SysAdminSystemEdit /></MainLayout>
               </AuthenticatedGuard>
             }
           />

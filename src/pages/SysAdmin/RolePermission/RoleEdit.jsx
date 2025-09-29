@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom'
 import {
   getAdminRoleAPI,
@@ -6,8 +6,9 @@ import {
   updateAdminRoleAPI,
   getAdminPermissionsAPI,
   assignPermissionsToRoleAPI
-} from '../services/api'
-import { useAuth } from '../hooks/useAuth'
+} from '../../../services/api'
+import { useAuth } from '../../../hooks/useAuth'
+import { useFormHandler } from '../../../utils/formHandler'
 
 export default function AdminRoleEdit() {
   const { id } = useParams()
@@ -16,12 +17,17 @@ export default function AdminRoleEdit() {
   const { user: currentUser } = useAuth()
   const [role, setRole] = useState(null)
   const [permissions, setPermissions] = useState([])
+  const [selectedPermissions, setSelectedPermissions] = useState([])
   const [loading, setLoading] = useState(true)
-  const [saving, setSaving] = useState(false)
-  const [error, setError] = useState(null)
-  const [success, setSuccess] = useState(null)
+  const [currentId, setCurrentId] = useState(id && id !== 'create' ? id : null)
+  const formRef = useRef()
 
-  const isEditing = id && id !== 'create'
+  const formHandler = useFormHandler({
+    stayOnPage: true,
+    autoNotify: true
+  })
+
+  const isEditing = currentId && currentId !== 'create'
   const pageTitle = isEditing ? '編輯角色' : '新增角色'
 
   // 檢查用戶是否有編輯權限（super_admin 和 admin 可以編輯）
@@ -61,20 +67,17 @@ export default function AdminRoleEdit() {
     description: ''
   })
 
-  // 選中的權限 IDs
-  const [selectedPermissions, setSelectedPermissions] = useState([])
 
   const loadInitialData = async () => {
     try {
       setLoading(true)
-      setError(null)
 
       // 並行載入角色和權限資料
       const promises = [
         getAdminPermissionsAPI(1, 1000, '', '') // 載入所有權限
       ]
 
-      if (isEditing) {
+      if (id && id !== 'create') {
         promises.push(getAdminRoleAPI(id))
       }
 
@@ -88,7 +91,7 @@ export default function AdminRoleEdit() {
       }
 
       // 載入角色資料（編輯模式）
-      if (isEditing && roleResponse && roleResponse.success) {
+      if (id && id !== 'create' && roleResponse && roleResponse.success) {
         const roleData = roleResponse.data
         setRole(roleData)
         setFormData({
@@ -103,7 +106,7 @@ export default function AdminRoleEdit() {
         }
       }
     } catch (err) {
-      setError(err.message || '載入資料失敗')
+      window.notifications.error(err.message || '載入資料失敗')
       console.error('Load initial data error:', err)
     } finally {
       setLoading(false)
@@ -113,6 +116,30 @@ export default function AdminRoleEdit() {
   useEffect(() => {
     loadInitialData()
   }, [id])
+
+  const loadRole = async (roleId = currentId) => {
+    if (!roleId || roleId === 'create') {
+      return
+    }
+    try {
+      const response = await getAdminRoleAPI(roleId)
+      if (response.success) {
+        const roleData = response.data
+        setRole(roleData)
+        setFormData({
+          name: roleData.name || '',
+          display_name: roleData.display_name || '',
+          description: roleData.description || ''
+        })
+        // 設定已選擇的權限
+        if (roleData.permissions && Array.isArray(roleData.permissions)) {
+          setSelectedPermissions(roleData.permissions.map(p => p.id.toString()))
+        }
+      }
+    } catch (err) {
+      console.error('Load role error:', err)
+    }
+  }
 
   const handleInputChange = (e) => {
     const { name, value } = e.target
@@ -146,37 +173,48 @@ export default function AdminRoleEdit() {
     e.preventDefault()
 
     if (!canEdit) {
-      setError('您沒有權限執行此操作')
+      window.notifications.error('您沒有權限執行此操作')
       return
     }
 
     try {
-      setSaving(true)
-      setError(null)
-      setSuccess(null)
+      // 使用 OpenCart 風格的表單提交
+      const submitUrl = isEditing
+        ? `/sys-admin/role-permission/roles/${currentId}`
+        : '/sys-admin/role-permission/roles'
 
-      // 儲存角色基本資料
-      const response = isEditing
-        ? await updateAdminRoleAPI(id, formData)
-        : await createAdminRoleAPI(formData)
+      const method = isEditing ? 'PUT' : 'POST'
 
-      if (response.success) {
-        // 如果有選擇權限，則分配權限
-        if (selectedPermissions.length > 0) {
-          const roleId = isEditing ? id : response.data.id
-          await assignPermissionsToRoleAPI(roleId, selectedPermissions.map(id => parseInt(id)))
+      await formHandler.submitForm(formRef.current, {
+        url: submitUrl,
+        method: method,
+        onSuccess: async (response, form) => {
+          const roleId = isEditing ? currentId : response.data.id
+
+          // 如果有選擇權限，則分配權限
+          if (selectedPermissions.length > 0) {
+            try {
+              await assignPermissionsToRoleAPI(roleId, selectedPermissions.map(id => parseInt(id)))
+            } catch (err) {
+              console.error('Assign permissions error:', err)
+            }
+          }
+
+          // 如果是新增成功，更新當前狀態和 URL
+          if (!isEditing && response.data && response.data.id) {
+            const newId = response.data.id.toString()
+            setCurrentId(newId)
+
+            // 重新載入完整的角色資料
+            await loadRole(newId)
+          } else if (isEditing) {
+            // 編輯模式下重新載入資料以確保顯示最新狀態
+            await loadRole(currentId)
+          }
         }
-
-        setSuccess(isEditing ? '角色更新成功' : '角色建立成功')
-        setTimeout(() => {
-          navigate(getReturnUrl())
-        }, 1500)
-      }
+      })
     } catch (err) {
-      setError(err.message || '儲存失敗')
       console.error('Save role error:', err)
-    } finally {
-      setSaving(false)
     }
   }
 
@@ -205,11 +243,11 @@ export default function AdminRoleEdit() {
     )
   }
 
-  if (isEditing && error && !role) {
+  if (isEditing && !role && !loading) {
     return (
       <div className="p-6">
         <div className="alert alert-error">
-          <span>{error}</span>
+          <span>角色不存在或載入失敗</span>
         </div>
         <button className="btn btn-primary mt-4" onClick={() => navigate(getReturnUrl())}>
           回到角色列表
@@ -248,20 +286,9 @@ export default function AdminRoleEdit() {
         </div>
       </div>
 
-      {/* 訊息顯示 */}
-      {error && (
-        <div className="alert alert-error mb-6">
-          <span>{error}</span>
-        </div>
-      )}
+      {/* 通知訊息由 formHandler 自動管理 */}
 
-      {success && (
-        <div className="alert alert-success mb-6">
-          <span>{success}</span>
-        </div>
-      )}
-
-      <form onSubmit={handleSubmit}>
+      <form ref={formRef} onSubmit={handleSubmit} action={isEditing ? `/api/sys-admin/role-permission/roles/${currentId}` : '/api/sys-admin/role-permission/roles'} method={isEditing ? 'PUT' : 'POST'}>
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* 角色基本資料 */}
           <div className="lg:col-span-2">
@@ -448,10 +475,9 @@ export default function AdminRoleEdit() {
               {canEdit && (
                 <button
                   type="submit"
-                  className={`btn btn-primary ${saving ? 'loading' : ''}`}
-                  disabled={saving}
+                  className="btn btn-primary"
                 >
-                  {saving ? '儲存中...' : (isEditing ? '更新角色' : '建立角色')}
+                  儲存
                 </button>
               )}
             </div>

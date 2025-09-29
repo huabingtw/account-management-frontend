@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { useNavigate, useSearchParams, Link } from 'react-router-dom'
-import { getAdminRolesAPI, deleteAdminRoleAPI } from '../services/api'
-import { useAuth } from '../hooks/useAuth'
+import { getAdminRolesAPI, deleteAdminRoleAPI } from '../../../services/api'
+import { useAuth } from '../../../hooks/useAuth'
 
 export default function AdminRoles() {
   const navigate = useNavigate()
