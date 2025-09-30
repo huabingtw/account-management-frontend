@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { useNavigate, useSearchParams, Link } from 'react-router-dom'
 import { getAdminRolesAPI, deleteAdminRoleAPI } from '../../../services/api'
 import { useAuth } from '../../../hooks/useAuth'
+import Paginator from '../../../components/Paginator'
 
 export default function AdminRoles() {
   const navigate = useNavigate()
@@ -180,54 +181,6 @@ export default function AdminRoles() {
     }
   }
 
-  const renderPagination = () => {
-    if (!pagination.last_page || pagination.last_page <= 1) return null
-
-    const pages = []
-    const maxPages = 5
-    let startPage = Math.max(1, pagination.current_page - Math.floor(maxPages / 2))
-    let endPage = Math.min(pagination.last_page, startPage + maxPages - 1)
-
-    if (endPage - startPage + 1 < maxPages) {
-      startPage = Math.max(1, endPage - maxPages + 1)
-    }
-
-    for (let i = startPage; i <= endPage; i++) {
-      pages.push(i)
-    }
-
-    return (
-      <div className="flex justify-center mt-6">
-        <div className="join">
-          <button
-            className="join-item btn btn-sm"
-            onClick={() => handlePageChange(pagination.current_page - 1)}
-            disabled={pagination.current_page <= 1}
-          >
-            «
-          </button>
-
-          {pages.map(page => (
-            <button
-              key={page}
-              className={`join-item btn btn-sm ${page === pagination.current_page ? 'btn-active' : ''}`}
-              onClick={() => handlePageChange(page)}
-            >
-              {page}
-            </button>
-          ))}
-
-          <button
-            className="join-item btn btn-sm"
-            onClick={() => handlePageChange(pagination.current_page + 1)}
-            disabled={pagination.current_page >= pagination.last_page}
-          >
-            »
-          </button>
-        </div>
-      </div>
-    )
-  }
 
   if (loading && !roles.length) {
     return (
@@ -477,7 +430,14 @@ export default function AdminRoles() {
               )}
 
               {/* 分頁 */}
-              {renderPagination()}
+              <Paginator
+                pagination={{
+                  ...pagination,
+                  current_page: pagination.current_page
+                }}
+                currentPage={pagination.current_page}
+                onPageChange={handlePageChange}
+              />
             </div>
           </div>
         </div>

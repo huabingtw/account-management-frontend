@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { useNavigate, Link, useSearchParams } from 'react-router-dom'
 import { getAdminUsersAPI, deleteAdminUserAPI } from '../services/api'
 import { useAuth } from '../hooks/useAuth'
+import Paginator from '../components/Paginator'
 
 export default function AdminUsers() {
   const navigate = useNavigate()
@@ -472,38 +473,11 @@ export default function AdminUsers() {
                   </div>
 
                   {/* Pagination */}
-                  {pagination.last_page > 1 && (
-                    <div className="flex justify-between items-center p-6 border-t">
-                      <div className="text-sm text-gray-600">
-                        顯示 {pagination.from} 至 {pagination.to} 項，共 {pagination.total} 項
-                      </div>
-                      <div className="join">
-                        <button
-                          className="join-item btn btn-sm"
-                          disabled={currentPage === 1}
-                          onClick={() => handlePageChange(currentPage - 1)}
-                        >
-                          «
-                        </button>
-                        {Array.from({ length: pagination.last_page }, (_, i) => i + 1).map(page => (
-                          <button
-                            key={page}
-                            className={`join-item btn btn-sm ${currentPage === page ? 'btn-active' : ''}`}
-                            onClick={() => handlePageChange(page)}
-                          >
-                            {page}
-                          </button>
-                        ))}
-                        <button
-                          className="join-item btn btn-sm"
-                          disabled={currentPage === pagination.last_page}
-                          onClick={() => handlePageChange(currentPage + 1)}
-                        >
-                          »
-                        </button>
-                      </div>
-                    </div>
-                  )}
+                  <Paginator
+                    pagination={pagination}
+                    currentPage={currentPage}
+                    onPageChange={handlePageChange}
+                  />
                 </>
               )}
             </div>

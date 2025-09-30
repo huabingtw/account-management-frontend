@@ -23,7 +23,7 @@ export default function AdminPermissionEdit() {
   const [currentId, setCurrentId] = useState(id) // 追蹤當前 ID 狀態
 
   const isEditing = currentId && currentId !== 'create'
-  const pageTitle = isEditing ? '編輯權限' : '新增權限'
+  const pageTitle = '權限定義'
 
   // 檢查用戶是否有編輯權限（super_admin 和 admin 可以編輯）
   const canEdit = currentUser?.roles?.some(role => ['super_admin', 'admin'].includes(role)) || false
@@ -185,19 +185,7 @@ export default function AdminPermissionEdit() {
             {pageTitle}
           </h1>
         </div>
-        <p className="text-base-content/70">
-          {isEditing ? '修改權限設定' : '建立新的系統權限'}
-        </p>
 
-        {/* Breadcrumb */}
-        <div className="text-sm breadcrumbs mt-4">
-          <ul>
-            <li><a onClick={() => navigate('/dashboard')} className="cursor-pointer">首頁</a></li>
-            <li>進階管理</li>
-            <li><a onClick={() => navigate(getReturnUrl())} className="cursor-pointer">權限管理</a></li>
-            <li>{isEditing ? '編輯權限' : '新增權限'}</li>
-          </ul>
-        </div>
       </div>
 
       {/* 通知訊息由 formHandler 自動管理 */}
@@ -205,11 +193,39 @@ export default function AdminPermissionEdit() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* 權限表單 */}
         <div className="lg:col-span-2">
+          {/* Breadcrumb 與按鈕 */}
+          <div className="flex items-center justify-between text-sm breadcrumbs mb-4">
+            <ul>
+              <li><a onClick={() => navigate('/dashboard')} className="cursor-pointer">首頁</a></li>
+              <li>進階管理</li>
+              <li><a onClick={() => navigate(getReturnUrl())} className="cursor-pointer">權限定義</a></li>
+              <li>編輯</li>
+            </ul>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                className="btn btn-ghost btn-sm"
+                onClick={() => navigate(getReturnUrl())}
+              >
+                取消
+              </button>
+              {canEdit && (
+                <button
+                  type="submit"
+                  form="permissionForm"
+                  className="btn btn-primary btn-sm"
+                >
+                  儲存
+                </button>
+              )}
+            </div>
+          </div>
+
           <div className="card bg-base-100 shadow-xl">
             <div className="card-body">
               <h2 className="card-title">權限資料</h2>
 
-              <form ref={formRef} onSubmit={handleSubmit} className="space-y-6" action={isEditing ? `/api/sys-admin/role-permission/permissions/${currentId}` : '/api/sys-admin/role-permission/permissions'} method={isEditing ? 'PUT' : 'POST'}>
+              <form id="permissionForm" ref={formRef} onSubmit={handleSubmit} className="space-y-6" action={isEditing ? `/api/sys-admin/role-permission/permissions/${currentId}` : '/api/sys-admin/role-permission/permissions'} method={isEditing ? 'PUT' : 'POST'}>
                 {/* 權限代碼 */}
                 <div className="grid grid-cols-12 items-center gap-4">
                   <div className="col-span-3 text-right">
@@ -288,24 +304,6 @@ export default function AdminPermissionEdit() {
                   </div>
                 </div>
 
-                {/* 提交按鈕 */}
-                <div className="card-actions justify-end pt-4">
-                  <button
-                    type="button"
-                    className="btn btn-ghost"
-                    onClick={() => navigate(getReturnUrl())}
-                  >
-                    取消
-                  </button>
-                  {canEdit && (
-                    <button
-                      type="submit"
-                      className="btn btn-primary"
-                    >
-                      {isEditing ? '更新權限' : '建立權限'}
-                    </button>
-                  )}
-                </div>
               </form>
             </div>
           </div>
@@ -313,11 +311,11 @@ export default function AdminPermissionEdit() {
 
         {/* 側邊欄資訊 */}
         <div className="space-y-6">
-          {/* 權限摘要 */}
+          {/* 摘要 */}
           {isEditing && permission && (
             <div className="card bg-base-100 shadow-xl">
               <div className="card-body">
-                <h3 className="card-title">權限摘要</h3>
+                <h3 className="card-title">摘要</h3>
 
                 <div className="space-y-3">
                   <div>

@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams, Link } from 'react-router-dom'
 import { getSystemsAPI, deleteSystemAPI } from '../../services/api'
 import { useAuth } from '../../hooks/useAuth'
 import { notifications } from '../../utils/formHandler'
+import Paginator from '../../components/Paginator'
 
 export default function Systems() {
   const navigate = useNavigate()
@@ -211,29 +212,11 @@ export default function Systems() {
                   </div>
 
                   {/* 分頁 */}
-                  {pagination && pagination.total > 0 && (
-                    <div className="flex justify-between items-center mt-4">
-                      <div className="text-sm text-base-content/70">
-                        共 {pagination.total} 筆，第 {pagination.current_page} / {pagination.last_page} 頁
-                      </div>
-                      <div className="join">
-                        <button
-                          className="join-item btn btn-sm"
-                          disabled={currentPage === 1}
-                          onClick={() => setCurrentPage(currentPage - 1)}
-                        >
-                          上一頁
-                        </button>
-                        <button
-                          className="join-item btn btn-sm"
-                          disabled={currentPage === pagination.last_page}
-                          onClick={() => setCurrentPage(currentPage + 1)}
-                        >
-                          下一頁
-                        </button>
-                      </div>
-                    </div>
-                  )}
+                  <Paginator
+                    pagination={pagination}
+                    currentPage={currentPage}
+                    onPageChange={setCurrentPage}
+                  />
                 </>
               )}
             </div>

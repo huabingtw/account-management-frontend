@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { useNavigate, useSearchParams, Link } from 'react-router-dom'
 import { getAdminPermissionsAPI, deleteAdminPermissionAPI } from '../../../services/api'
 import { useAuth } from '../../../hooks/useAuth'
+import Paginator from '../../../components/Paginator'
 
 export default function AdminPermissions() {
   const navigate = useNavigate()
@@ -180,54 +181,6 @@ export default function AdminPermissions() {
     }
   }
 
-  const renderPagination = () => {
-    if (!pagination.last_page || pagination.last_page <= 1) return null
-
-    const pages = []
-    const maxPages = 5
-    let startPage = Math.max(1, pagination.current_page - Math.floor(maxPages / 2))
-    let endPage = Math.min(pagination.last_page, startPage + maxPages - 1)
-
-    if (endPage - startPage + 1 < maxPages) {
-      startPage = Math.max(1, endPage - maxPages + 1)
-    }
-
-    for (let i = startPage; i <= endPage; i++) {
-      pages.push(i)
-    }
-
-    return (
-      <div className="flex justify-center mt-6">
-        <div className="join">
-          <button
-            className="join-item btn btn-sm"
-            onClick={() => handlePageChange(pagination.current_page - 1)}
-            disabled={pagination.current_page <= 1}
-          >
-            «
-          </button>
-
-          {pages.map(page => (
-            <button
-              key={page}
-              className={`join-item btn btn-sm ${page === pagination.current_page ? 'btn-active' : ''}`}
-              onClick={() => handlePageChange(page)}
-            >
-              {page}
-            </button>
-          ))}
-
-          <button
-            className="join-item btn btn-sm"
-            onClick={() => handlePageChange(pagination.current_page + 1)}
-            disabled={pagination.current_page >= pagination.last_page}
-          >
-            »
-          </button>
-        </div>
-      </div>
-    )
-  }
 
   if (loading && !permissions.length) {
     return (
@@ -245,7 +198,7 @@ export default function AdminPermissions() {
       <div className="mb-6">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
           <div>
-            <h1 className="text-3xl font-bold text-base-content">權限管理</h1>
+            <h1 className="text-3xl font-bold text-base-content">權限定義</h1>
             <p className="text-base-content/70">管理系統權限和存取控制</p>
           </div>
 
@@ -294,7 +247,8 @@ export default function AdminPermissions() {
           <ul>
             <li><a href="/dashboard">首頁</a></li>
             <li>進階管理</li>
-            <li>權限管理</li>
+            <li>權限定義</li>
+            <li>列表</li>
           </ul>
         </div>
       </div>
@@ -483,7 +437,14 @@ export default function AdminPermissions() {
               )}
 
               {/* 分頁 */}
-              {renderPagination()}
+              <Paginator
+                pagination={{
+                  ...pagination,
+                  current_page: pagination.current_page
+                }}
+                currentPage={pagination.current_page}
+                onPageChange={handlePageChange}
+              />
             </div>
           </div>
         </div>

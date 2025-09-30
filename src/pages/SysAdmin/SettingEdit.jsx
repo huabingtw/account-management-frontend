@@ -237,15 +237,6 @@ export default function SettingEdit() {
           {isEditing ? '修改系統設定參數' : '建立新的系統設定參數'}
         </p>
 
-        {/* Breadcrumb */}
-        <div className="text-sm breadcrumbs mt-4">
-          <ul>
-            <li><a onClick={() => navigate('/dashboard')} className="cursor-pointer">首頁</a></li>
-            <li>系統管理</li>
-            <li><a onClick={() => navigate(getReturnUrl())} className="cursor-pointer">參數設定</a></li>
-            <li>{isEditing ? '編輯設定' : '新增設定'}</li>
-          </ul>
-        </div>
       </div>
 
       {/* 通知訊息由 formHandler 自動管理 */}
@@ -253,11 +244,40 @@ export default function SettingEdit() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* 設定表單 */}
         <div className="lg:col-span-2">
+          {/* Breadcrumb 與按鈕 */}
+          <div className="flex items-center justify-between text-sm breadcrumbs mb-4">
+            <ul>
+              <li><a onClick={() => navigate('/dashboard')} className="cursor-pointer">首頁</a></li>
+              <li>系統管理</li>
+              <li><a onClick={() => navigate(getReturnUrl())} className="cursor-pointer">參數設定</a></li>
+              <li>{isEditing ? '編輯設定' : '新增設定'}</li>
+            </ul>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                className="btn btn-ghost btn-sm"
+                onClick={() => navigate(getReturnUrl())}
+              >
+                取消
+              </button>
+              {canEdit && (
+                <button
+                  type="submit"
+                  form="settingForm"
+                  className="btn btn-primary btn-sm"
+                  disabled={formData.is_json && formData.setting_value && !validateJson(formData.setting_value)}
+                >
+                  儲存
+                </button>
+              )}
+            </div>
+          </div>
+
           <div className="card bg-base-100 shadow-xl">
             <div className="card-body">
               <h2 className="card-title">設定資料</h2>
 
-              <form ref={formRef} onSubmit={handleSubmit} className="space-y-6" action={isEditing ? `/api/sys-admin/settings/${currentId}` : '/api/sys-admin/settings'} method={isEditing ? 'PUT' : 'POST'}>
+              <form id="settingForm" ref={formRef} onSubmit={handleSubmit} className="space-y-6" action={isEditing ? `/api/sys-admin/settings/${currentId}` : '/api/sys-admin/settings'} method={isEditing ? 'PUT' : 'POST'}>
                 {/* 隱藏欄位用於 locale */}
                 <input type="hidden" name="locale" value="" />
                 {/* 群組 */}
@@ -425,25 +445,6 @@ export default function SettingEdit() {
                   </div>
                 </div>
 
-                {/* 提交按鈕 */}
-                <div className="card-actions justify-end pt-4">
-                  <button
-                    type="button"
-                    className="btn btn-ghost"
-                    onClick={() => navigate(getReturnUrl())}
-                  >
-                    取消
-                  </button>
-                  {canEdit && (
-                    <button
-                      type="submit"
-                      className="btn btn-primary"
-                      disabled={formData.is_json && formData.setting_value && !validateJson(formData.setting_value)}
-                    >
-                      儲存
-                    </button>
-                  )}
-                </div>
               </form>
             </div>
           </div>
@@ -451,11 +452,11 @@ export default function SettingEdit() {
 
         {/* 側邊欄資訊 */}
         <div className="space-y-6">
-          {/* 設定摘要 */}
+          {/* 摘要 */}
           {isEditing && setting && (
             <div className="card bg-base-100 shadow-xl">
               <div className="card-body">
-                <h3 className="card-title">設定摘要</h3>
+                <h3 className="card-title">摘要</h3>
 
                 <div className="space-y-3">
                   <div>

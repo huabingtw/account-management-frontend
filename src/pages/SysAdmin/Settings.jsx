@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { getSettingsAPI, deleteSettingAPI, getSettingsGroupsAPI } from '../../services/api'
 import { useAuth } from '../../hooks/useAuth'
+import Paginator from '../../components/Paginator'
 
 export default function Settings() {
   const navigate = useNavigate()
@@ -157,58 +158,6 @@ export default function Settings() {
     return setting.setting_value
   }
 
-  const renderPagination = () => {
-    if (!pagination.last_page || pagination.last_page <= 1) return null
-
-    const pages = []
-    const maxPages = 5
-    let startPage = Math.max(1, pagination.current_page - Math.floor(maxPages / 2))
-    let endPage = Math.min(pagination.last_page, startPage + maxPages - 1)
-
-    if (endPage - startPage + 1 < maxPages) {
-      startPage = Math.max(1, endPage - maxPages + 1)
-    }
-
-    for (let i = startPage; i <= endPage; i++) {
-      pages.push(i)
-    }
-
-    return (
-      <div className="flex justify-center mt-6">
-        <div className="join">
-          <button
-            className="join-item btn btn-sm"
-            onClick={() => handlePageChange(pagination.current_page - 1)}
-            disabled={pagination.current_page <= 1}
-          >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7"/>
-            </svg>
-          </button>
-
-          {pages.map(page => (
-            <button
-              key={page}
-              className={`join-item btn btn-sm ${page === pagination.current_page ? 'btn-active' : ''}`}
-              onClick={() => handlePageChange(page)}
-            >
-              {page}
-            </button>
-          ))}
-
-          <button
-            className="join-item btn btn-sm"
-            onClick={() => handlePageChange(pagination.current_page + 1)}
-            disabled={pagination.current_page >= pagination.last_page}
-          >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7"/>
-            </svg>
-          </button>
-        </div>
-      </div>
-    )
-  }
 
   if (loading && !settings.length) {
     return (
@@ -476,14 +425,11 @@ export default function Settings() {
                 </table>
               </div>
 
-              {renderPagination()}
-
-              {/* 統計資訊 */}
-              {pagination.total > 0 && (
-                <div className="text-sm text-base-content/70 text-center mt-4">
-                  顯示第 {pagination.from || 1} 到 {pagination.to || settings.length} 筆，共 {pagination.total} 筆設定
-                </div>
-              )}
+              <Paginator
+                pagination={pagination}
+                currentPage={currentPage}
+                onPageChange={handlePageChange}
+              />
             </div>
           </div>
         </div>

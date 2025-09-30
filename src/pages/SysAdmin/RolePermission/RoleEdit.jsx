@@ -28,7 +28,7 @@ export default function AdminRoleEdit() {
   })
 
   const isEditing = currentId && currentId !== 'create'
-  const pageTitle = isEditing ? '編輯角色' : '新增角色'
+  const pageTitle = '角色管理'
 
   // 檢查用戶是否有編輯權限（super_admin 和 admin 可以編輯）
   const canEdit = currentUser?.roles?.some(role => ['super_admin', 'admin'].includes(role)) || false
@@ -271,27 +271,42 @@ export default function AdminRoleEdit() {
             {pageTitle}
           </h1>
         </div>
-        <p className="text-base-content/70">
-          {isEditing ? '修改角色設定和權限' : '建立新的系統角色'}
-        </p>
-
-        {/* Breadcrumb */}
-        <div className="text-sm breadcrumbs mt-4">
-          <ul>
-            <li><a onClick={() => navigate('/dashboard')} className="cursor-pointer">首頁</a></li>
-            <li>進階管理</li>
-            <li><a onClick={() => navigate(getReturnUrl())} className="cursor-pointer">角色管理</a></li>
-            <li>{isEditing ? '編輯角色' : '新增角色'}</li>
-          </ul>
-        </div>
       </div>
 
       {/* 通知訊息由 formHandler 自動管理 */}
 
-      <form ref={formRef} onSubmit={handleSubmit} action={isEditing ? `/api/sys-admin/role-permission/roles/${currentId}` : '/api/sys-admin/role-permission/roles'} method={isEditing ? 'PUT' : 'POST'}>
+      <form id="roleForm" ref={formRef} onSubmit={handleSubmit} action={isEditing ? `/api/sys-admin/role-permission/roles/${currentId}` : '/api/sys-admin/role-permission/roles'} method={isEditing ? 'PUT' : 'POST'}>
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* 角色基本資料 */}
           <div className="lg:col-span-2">
+            {/* Breadcrumb 與按鈕 */}
+            <div className="flex items-center justify-between text-sm breadcrumbs mb-4">
+              <ul>
+                <li><a onClick={() => navigate('/dashboard')} className="cursor-pointer">首頁</a></li>
+                <li>進階管理</li>
+                <li><a onClick={() => navigate(getReturnUrl())} className="cursor-pointer">角色管理</a></li>
+                <li>編輯</li>
+              </ul>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  className="btn btn-ghost btn-sm"
+                  onClick={() => navigate(getReturnUrl())}
+                >
+                  取消
+                </button>
+                {canEdit && (
+                  <button
+                    type="submit"
+                    form="roleForm"
+                    className="btn btn-primary btn-sm"
+                  >
+                    儲存
+                  </button>
+                )}
+              </div>
+            </div>
+
             <div className="card bg-base-100 shadow-xl mb-6">
               <div className="card-body">
                 <h2 className="card-title">角色資料</h2>
@@ -411,11 +426,11 @@ export default function AdminRoleEdit() {
 
           {/* 側邊欄資訊 */}
           <div className="space-y-6">
-            {/* 角色摘要 */}
+            {/* 摘要 */}
             {isEditing && role && (
               <div className="card bg-base-100 shadow-xl">
                 <div className="card-body">
-                  <h3 className="card-title">角色摘要</h3>
+                  <h3 className="card-title">摘要</h3>
 
                   <div className="space-y-3">
                     <div>
@@ -461,28 +476,6 @@ export default function AdminRoleEdit() {
           </div>
         </div>
 
-        {/* 提交按鈕 */}
-        <div className="card bg-base-100 shadow-xl mt-6">
-          <div className="card-body">
-            <div className="card-actions justify-end">
-              <button
-                type="button"
-                className="btn btn-ghost"
-                onClick={() => navigate(getReturnUrl())}
-              >
-                取消
-              </button>
-              {canEdit && (
-                <button
-                  type="submit"
-                  className="btn btn-primary"
-                >
-                  儲存
-                </button>
-              )}
-            </div>
-          </div>
-        </div>
       </form>
     </div>
   )

@@ -308,7 +308,7 @@ export default function SystemEdit() {
           {isEditing && system && (
             <div className="card bg-base-100 shadow-xl">
               <div className="card-body">
-                <h3 className="card-title">系統摘要</h3>
+                <h3 className="card-title">摘要</h3>
 
                 <div className="space-y-3">
                   <div>
