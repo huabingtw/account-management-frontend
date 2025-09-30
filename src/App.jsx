@@ -20,13 +20,14 @@ import AdminPermissionEdit from './pages/SysAdmin/RolePermission/PermissionEdit'
 import AdminRoles from './pages/SysAdmin/RolePermission/Roles'
 import AdminRoleEdit from './pages/SysAdmin/RolePermission/RoleEdit'
 import AdminSystems from './pages/AdminSystems'
-import AdminOAuthClients from './pages/AdminOAuthClients'
 import SysAdminMetaKeys from './pages/SysAdmin/MetaKeys'
 import SysAdminMetaKeyEdit from './pages/SysAdmin/MetaKeyEdit'
 import SysAdminSettings from './pages/SysAdmin/Settings'
 import SysAdminSettingEdit from './pages/SysAdmin/SettingEdit'
 import SysAdminSystems from './pages/SysAdmin/Systems'
 import SysAdminSystemEdit from './pages/SysAdmin/SystemEdit'
+import SysAdminOAuthClients from './pages/SysAdmin/OAuthClients'
+import SysAdminOAuthClientEdit from './pages/SysAdmin/OAuthClientEdit'
 
 function App() {
   return (
@@ -180,14 +181,6 @@ function App() {
               </AuthenticatedGuard>
             }
           />
-          <Route
-            path="/admin/oauth-clients"
-            element={
-              <AuthenticatedGuard anyRole={['super_admin']}>
-                <MainLayout><AdminOAuthClients /></MainLayout>
-              </AuthenticatedGuard>
-            }
-          />
 
           {/* 系統管理路由 */}
           <Route
@@ -235,6 +228,22 @@ function App() {
             element={
               <AuthenticatedGuard anyRole={['super_admin']}>
                 <MainLayout><SysAdminSystemEdit /></MainLayout>
+              </AuthenticatedGuard>
+            }
+          />
+          <Route
+            path="/sys-admin/oauth-clients"
+            element={
+              <AuthenticatedGuard anyRole={['super_admin']}>
+                <MainLayout><SysAdminOAuthClients /></MainLayout>
+              </AuthenticatedGuard>
+            }
+          />
+          <Route
+            path="/sys-admin/oauth-clients/:id"
+            element={
+              <AuthenticatedGuard anyRole={['super_admin']}>
+                <MainLayout><SysAdminOAuthClientEdit /></MainLayout>
               </AuthenticatedGuard>
             }
           />

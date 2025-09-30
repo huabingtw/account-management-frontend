@@ -79,6 +79,12 @@ export default function MainLayout({ children }) {
           requireRole: ['super_admin']
         },
         {
+          path: '/sys-admin/oauth-clients',
+          label: 'OAuth 客戶端',
+          icon: '🔑',
+          requireRole: ['super_admin']
+        },
+        {
           path: '/sys-admin/settings',
           label: '參數設定',
           icon: '🖥️',
@@ -89,13 +95,7 @@ export default function MainLayout({ children }) {
           label: '擴充欄位',
           icon: '🏷️',
           requireRole: ['super_admin']
-        },
-        // {
-        //   path: '/admin/oauth-clients',
-        //   label: 'OAuth 客戶端',
-        //   icon: '🔐',
-        //   requireRole: ['super_admin']
-        // }
+        }
       ]
     }
   ]

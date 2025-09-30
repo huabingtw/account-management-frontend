@@ -72,6 +72,20 @@ const apiRequest = async (endpoint, options = {}) => {
     }
 
     if (!response.ok) {
+      // 處理 401 Unauthenticated 錯誤
+      if (response.status === 401) {
+        // 清除本地存儲的認證資料
+        localStorage.removeItem('auth_token')
+        localStorage.removeItem('user')
+
+        // 如果不是在登入頁面，則重定向到登入頁面
+        if (!window.location.pathname.includes('/login')) {
+          console.warn('Authentication token expired, redirecting to login page')
+          window.location.href = '/login'
+          return // 防止繼續執行
+        }
+      }
+
       const error = new Error(data.message || '請求失敗')
       error.status = response.status
       error.statusText = response.statusText
@@ -653,6 +667,63 @@ export const getSettingsGroupsAPI = async () => {
   return apiRequest('/sys-admin/settings-groups')
 }
 
+// ==================== OAuth Clients API ====================
+
+// 取得 OAuth Clients 列表 (分頁)
+export const getOAuthClientsAPI = async (page = 1, limit = 10, filterCode = '', filterName = '', filterSystemCode = '') => {
+  let url = `page=${page}&limit=${limit}`
+  if (filterCode) {
+    url += '&filter_code=' + encodeURIComponent(filterCode)
+  }
+  if (filterName) {
+    url += '&filter_name=' + encodeURIComponent(filterName)
+  }
+  if (filterSystemCode) {
+    url += '&filter_system_code=' + encodeURIComponent(filterSystemCode)
+  }
+  return apiRequest(`/sys-admin/oauth-clients?${url}`)
+}
+
+// 取得單一 OAuth Client
+export const getOAuthClientAPI = async (id) => {
+  return apiRequest(`/sys-admin/oauth-clients/${id}`)
+}
+
+// 建立新 OAuth Client
+export const createOAuthClientAPI = async (clientData) => {
+  return apiRequest('/sys-admin/oauth-clients', {
+    method: 'POST',
+    body: JSON.stringify(clientData),
+  })
+}
+
+// 更新 OAuth Client
+export const updateOAuthClientAPI = async (id, clientData) => {
+  return apiRequest(`/sys-admin/oauth-clients/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify(clientData),
+  })
+}
+
+// 刪除 OAuth Client
+export const deleteOAuthClientAPI = async (id) => {
+  return apiRequest(`/sys-admin/oauth-clients/${id}`, {
+    method: 'DELETE',
+  })
+}
+
+// 取得系統列表 (供 OAuth Client 選擇)
+export const getOAuthClientSystemsAPI = async () => {
+  return apiRequest('/sys-admin/oauth-clients-systems')
+}
+
+// 重新生成 OAuth Client Secret
+export const regenerateOAuthClientSecretAPI = async (id) => {
+  return apiRequest(`/sys-admin/oauth-clients/${id}/regenerate-secret`, {
+    method: 'POST',
+  })
+}
+
 export default {
   login: loginAPI,
   logout: logoutAPI,
@@ -714,4 +785,12 @@ export default {
   updateSetting: updateSettingAPI,
   deleteSetting: deleteSettingAPI,
   getSettingsGroups: getSettingsGroupsAPI,
+  // OAuth Client APIs
+  getOAuthClients: getOAuthClientsAPI,
+  getOAuthClient: getOAuthClientAPI,
+  createOAuthClient: createOAuthClientAPI,
+  updateOAuthClient: updateOAuthClientAPI,
+  deleteOAuthClient: deleteOAuthClientAPI,
+  getOAuthClientSystems: getOAuthClientSystemsAPI,
+  regenerateOAuthClientSecret: regenerateOAuthClientSecretAPI,
 }

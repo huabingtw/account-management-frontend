@@ -100,37 +100,41 @@ export default function Login() {
               </div>
             )}
 
-            <div className="form-control">
-              <label className="label">
+            <div className="grid grid-cols-12 items-center gap-4 mb-4">
+              <div className="col-span-3 text-right">
                 <span className="label-text">Email</span>
-              </label>
-              <input
-                type="email"
-                name="email"
-                placeholder="請輸入 Email"
-                className="input input-bordered"
-                value={formData.email}
-                onChange={handleInputChange}
-                required
-              />
+              </div>
+              <div className="col-span-9">
+                <input
+                  type="email"
+                  name="email"
+                  placeholder="請輸入 Email"
+                  className="input input-bordered w-full"
+                  value={formData.email}
+                  onChange={handleInputChange}
+                  required
+                />
+              </div>
             </div>
 
-            <div className="form-control">
-              <label className="label">
+            <div className="grid grid-cols-12 items-center gap-4 mb-4">
+              <div className="col-span-3 text-right">
                 <span className="label-text">密碼</span>
-              </label>
-              <input
-                type="password"
-                name="password"
-                placeholder="請輸入密碼"
-                className="input input-bordered"
-                value={formData.password}
-                onChange={handleInputChange}
-                required
-              />
-              <label className="label">
-                <Link to="/forgot-password" className="label-text-alt link link-hover">忘記密碼？</Link>
-              </label>
+              </div>
+              <div className="col-span-9">
+                <input
+                  type="password"
+                  name="password"
+                  placeholder="請輸入密碼"
+                  className="input input-bordered w-full"
+                  value={formData.password}
+                  onChange={handleInputChange}
+                  required
+                />
+                <div className="mt-1">
+                  <Link to="/forgot-password" className="label-text-alt link link-hover">忘記密碼？</Link>
+                </div>
+              </div>
             </div>
 
             <div className="form-control mt-6">
